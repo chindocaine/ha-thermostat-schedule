@@ -1,0 +1,12 @@
+{
+  "domain": "thermostat_schedule",
+  "name": "Thermostat Schedule",
+  "codeowners": ["@chindocaine"],
+  "config_flow": true,
+  "documentation": "https://github.com/chindocaine/ha-thermostat-schedule",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/chindocaine/ha-thermostat-schedule/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

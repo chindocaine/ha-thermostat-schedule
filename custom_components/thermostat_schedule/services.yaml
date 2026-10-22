@@ -1,0 +1,20 @@
+set_override:
+  target:
+    entity:
+      integration: thermostat_schedule
+      domain: sensor
+      device_class: temperature
+  fields:
+    temperature:
+      required: true
+      example: 22
+      selector:
+        number:
+          min: 4
+          max: 35
+          step: 0.5
+          unit_of_measurement: "°C"
+    duration:
+      required: false
+      selector:
+        duration:

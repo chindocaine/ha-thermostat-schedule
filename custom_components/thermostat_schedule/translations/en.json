@@ -1,0 +1,448 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add heating hub",
+        "description": "A hub groups rooms that share profiles and rules (for example one hub per floor). The first profile in the list is the initial base profile. Add the integration again to create another hub.",
+        "data": {
+          "name": "Name",
+          "profiles": "Profiles"
+        },
+        "data_description": {
+          "profiles": "Type to add your own profile names."
+        }
+      }
+    },
+    "error": {
+      "invalid_profiles": "Enter at least one profile name (max. 40 characters)."
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Add room",
+        "reconfigure": "Room settings"
+      },
+      "entry_type": "Room",
+      "step": {
+        "user": {
+          "title": "Add room",
+          "data": {
+            "name": "Name",
+            "climate_entities": "Thermostats",
+            "sync_thermostats": "Keep thermostats in sync",
+            "hold_policy": "Manual change behavior",
+            "hold_minutes": "Hold duration (minutes)",
+            "use_external": "Use an external temperature sensor"
+          },
+          "data_description": {
+            "climate_entities": "All thermostats of this room. They follow the same schedule.",
+            "sync_thermostats": "A manual change on one thermostat is copied to the others in this room.",
+            "hold_policy": "What happens when someone changes the target temperature on a thermostat.",
+            "hold_minutes": "Only used by the \"Hold for a duration\" behavior.",
+            "use_external": "Pushes a room temperature sensor to the thermostats (Sonoff TRVZB via Zigbee2MQTT)."
+          }
+        },
+        "reconfigure": {
+          "title": "Room settings",
+          "data": {
+            "name": "Name",
+            "climate_entities": "Thermostats",
+            "sync_thermostats": "Keep thermostats in sync",
+            "hold_policy": "Manual change behavior",
+            "hold_minutes": "Hold duration (minutes)",
+            "use_external": "Use an external temperature sensor"
+          },
+          "data_description": {
+            "climate_entities": "All thermostats of this room. They follow the same schedule.",
+            "sync_thermostats": "A manual change on one thermostat is copied to the others in this room.",
+            "hold_policy": "What happens when someone changes the target temperature on a thermostat.",
+            "hold_minutes": "Only used by the \"Hold for a duration\" behavior.",
+            "use_external": "Pushes a room temperature sensor to the thermostats (Sonoff TRVZB via Zigbee2MQTT)."
+          }
+        },
+        "external": {
+          "title": "External temperature sensor",
+          "description": "Choose the room's temperature sensor. The next steps assign the thermostat entities that receive the value.",
+          "data": {
+            "sensor": "Temperature sensor",
+            "min_change": "Minimum change (K)",
+            "min_interval": "Minimum interval (seconds)",
+            "heartbeat_minutes": "Heartbeat (minutes)",
+            "grace_minutes": "Sensor-lost grace period (minutes)",
+            "fallback": "If the sensor is lost",
+            "remote_option": "Option for external sensor",
+            "local_option": "Option for internal sensor"
+          },
+          "data_description": {
+            "min_change": "Smaller changes are not sent, to spare the batteries.",
+            "min_interval": "Never send more often than this.",
+            "heartbeat_minutes": "Re-send the value regularly so the thermostat does not fall back to its own sensor. 0 disables it.",
+            "grace_minutes": "How long the sensor may be unavailable before the fallback applies.",
+            "fallback": "Switch the thermostats back to their internal sensor, or keep sending the last value.",
+            "remote_option": "Value of the mode select that makes the thermostat use the external sensor (Sonoff TRVZB: remote_temperature).",
+            "local_option": "Value that makes it use its own sensor again, used for the fallback (Sonoff TRVZB: local_temperature)."
+          }
+        },
+        "external_trv": {
+          "title": "Thermostat entities",
+          "description": "Entities of **{climate}** (auto-detected from the same device when possible).",
+          "data": {
+            "number": "External temperature input (number)",
+            "select": "Temperature sensor mode (select, optional)"
+          },
+          "data_description": {
+            "number": "The entity that receives the room temperature. Pre-selected when detected on the thermostat's device; change it for other thermostat models.",
+            "select": "The entity that switches the thermostat between its internal and the external sensor. Leave empty if the thermostat has none; then only the temperature value is sent."
+          }
+        }
+      },
+      "error": {
+        "no_thermostat": "Select at least one thermostat.",
+        "climate_in_use": "One of these thermostats already belongs to another room."
+      },
+      "abort": {
+        "reconfigure_successful": "Room updated."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Thermostat Schedule",
+        "menu_options": {
+          "schedule": "Edit schedules",
+          "profiles": "Profiles",
+          "rules": "Trigger rules",
+          "finish": "Finish"
+        }
+      },
+      "schedule": {
+        "title": "Edit schedules",
+        "description": "Choose the room whose schedule you want to edit.",
+        "data": {
+          "room": "Room"
+        }
+      },
+      "schedule_profile": {
+        "title": "Edit schedules",
+        "description": "Room: **{room}**. Choose the profile to edit.",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "schedule_day": {
+        "title": "Schedule",
+        "description": "**{room}** – profile **{profile}**\n\n{summary}\n\nChoose a day to edit.",
+        "menu_options": {
+          "edit_day_mon": "Monday",
+          "edit_day_tue": "Tuesday",
+          "edit_day_wed": "Wednesday",
+          "edit_day_thu": "Thursday",
+          "edit_day_fri": "Friday",
+          "edit_day_sat": "Saturday",
+          "edit_day_sun": "Sunday",
+          "schedule_profile": "Choose another profile",
+          "init": "Back"
+        }
+      },
+      "edit_day_mon": {
+        "title": "Monday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_tue": {
+        "title": "Tuesday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_wed": {
+        "title": "Wednesday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_thu": {
+        "title": "Thursday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_fri": {
+        "title": "Friday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_sat": {
+        "title": "Saturday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "edit_day_sun": {
+        "title": "Sunday",
+        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "data": {
+          "schedule": "Switch points",
+          "copy_to": "Also apply to"
+        },
+        "data_description": {
+          "schedule": "Example: 06:00 21 / 22:00 17",
+          "copy_to": "Copy this day to other days."
+        }
+      },
+      "profiles": {
+        "title": "Profiles",
+        "description": "Current profiles: **{profiles}**",
+        "menu_options": {
+          "profile_add": "Add profile",
+          "profile_rename": "Rename profile",
+          "profile_delete": "Delete profile",
+          "init": "Back"
+        }
+      },
+      "profile_add": {
+        "title": "Add profile",
+        "data": {
+          "new_name": "Name",
+          "copy_from": "Copy schedules from"
+        },
+        "data_description": {
+          "copy_from": "Optional. Default is a standard day schedule."
+        }
+      },
+      "profile_rename": {
+        "title": "Rename profile",
+        "data": {
+          "profile": "Profile",
+          "new_name": "Name"
+        }
+      },
+      "profile_delete": {
+        "title": "Delete profile",
+        "description": "Rooms lose the schedules of this profile. Profiles used by a rule cannot be deleted.",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "rules": {
+        "title": "Trigger rules",
+        "description": "Rules overlay the base profile. The highest-priority active rule wins.\n\n{rules}",
+        "menu_options": {
+          "rule_add": "Add rule",
+          "rule_edit": "Edit rule",
+          "rule_delete": "Delete rule",
+          "init": "Back"
+        }
+      },
+      "rule_add": {
+        "title": "Add rule",
+        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again.",
+        "data": {
+          "name": "Name",
+          "scope": "Applies to",
+          "entities": "Entities",
+          "match": "Match",
+          "state": "State",
+          "for_minutes": "Only after (minutes)",
+          "profile": "Switch to profile",
+          "priority": "Priority"
+        },
+        "data_description": {
+          "scope": "All rooms of this hub, or a single room.",
+          "entities": "For example a person, an input boolean or a binary sensor.",
+          "match": "Whether any or all entities must have the state.",
+          "state": "State to match, for example not_home or on.",
+          "for_minutes": "The condition must hold this long before the rule becomes active.",
+          "priority": "Higher wins."
+        }
+      },
+      "rule_edit": {
+        "title": "Edit rule",
+        "data": {
+          "rule": "Rule"
+        }
+      },
+      "rule_edit_form": {
+        "title": "Edit rule",
+        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again.",
+        "data": {
+          "name": "Name",
+          "scope": "Applies to",
+          "entities": "Entities",
+          "match": "Match",
+          "state": "State",
+          "for_minutes": "Only after (minutes)",
+          "profile": "Switch to profile",
+          "priority": "Priority"
+        },
+        "data_description": {
+          "scope": "All rooms of this hub, or a single room.",
+          "entities": "For example a person, an input boolean or a binary sensor.",
+          "match": "Whether any or all entities must have the state.",
+          "state": "State to match, for example not_home or on.",
+          "for_minutes": "The condition must hold this long before the rule becomes active.",
+          "priority": "Higher wins."
+        }
+      },
+      "rule_delete": {
+        "title": "Delete rule",
+        "data": {
+          "rule": "Rule"
+        }
+      }
+    },
+    "error": {
+      "invalid_format": "Use one line per switch point, for example: 06:00 21",
+      "empty_day": "Enter at least one switch point.",
+      "too_many_points": "Too many switch points (maximum 12).",
+      "first_point_midnight": "The first switch point must be 00:00.",
+      "invalid_time": "Invalid time.",
+      "not_increasing": "Times must be strictly increasing without duplicates.",
+      "temp_range": "Temperatures must be between 4 and 35 °C.",
+      "invalid_profiles": "Enter a name (max. 40 characters).",
+      "profile_exists": "A profile with this name already exists.",
+      "last_profile": "The last profile cannot be deleted.",
+      "profile_in_use": "A rule still uses this profile.",
+      "no_entities": "Select at least one entity.",
+      "no_state": "Enter the state to match."
+    },
+    "abort": {
+      "no_rooms": "Add a room first (use the \"Add room\" button on the integration page)."
+    }
+  },
+  "entity": {
+    "switch": {
+      "enabled": {
+        "name": "Heating schedules"
+      },
+      "auto": {
+        "name": "Automatic mode"
+      }
+    },
+    "select": {
+      "base_profile": {
+        "name": "Base profile"
+      },
+      "profile": {
+        "name": "Profile",
+        "state": {
+          "follow_hub": "Follow hub"
+        }
+      }
+    },
+    "button": {
+      "resume_schedule": {
+        "name": "Resume schedule"
+      }
+    },
+    "sensor": {
+      "effective_mode": {
+        "name": "Effective mode"
+      },
+      "target_temperature": {
+        "name": "Target temperature"
+      },
+      "active_profile": {
+        "name": "Active profile"
+      },
+      "external_temperature_status": {
+        "name": "External temperature status",
+        "state": {
+          "idle": "Idle",
+          "ok": "OK",
+          "sensor_unavailable": "Sensor unavailable",
+          "fallback": "Using internal sensor"
+        }
+      }
+    }
+  },
+  "selector": {
+    "hold_policy": {
+      "options": {
+        "next_switch": "Hold until the next switch point",
+        "duration": "Hold for a duration",
+        "until_resumed": "Hold until resumed",
+        "ignore": "Ignore (restore the schedule)"
+      }
+    },
+    "fallback": {
+      "options": {
+        "internal": "Use the internal sensor",
+        "keep": "Keep sending the last value"
+      }
+    },
+    "match": {
+      "options": {
+        "any": "Any entity",
+        "all": "All entities"
+      }
+    },
+    "days": {
+      "options": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Set override",
+      "description": "Sets a manual room temperature that replaces the schedule until the next switch point (or the given duration).",
+      "fields": {
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature in °C."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional hold time. Default follows the room's manual change behavior."
+        }
+      }
+    }
+  }
+}

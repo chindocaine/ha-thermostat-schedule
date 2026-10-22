@@ -1,0 +1,448 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heizungs-Hub hinzufügen",
+        "description": "Ein Hub fasst Räume mit gemeinsamen Profilen und Regeln zusammen (z. B. ein Hub pro Etage). Das erste Profil der Liste ist das anfängliche Basisprofil. Für einen weiteren Hub die Integration erneut hinzufügen.",
+        "data": {
+          "name": "Name",
+          "profiles": "Profile"
+        },
+        "data_description": {
+          "profiles": "Eigene Profilnamen können eingetippt werden."
+        }
+      }
+    },
+    "error": {
+      "invalid_profiles": "Mindestens einen Profilnamen eingeben (max. 40 Zeichen)."
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Raum hinzufügen",
+        "reconfigure": "Raumeinstellungen"
+      },
+      "entry_type": "Raum",
+      "step": {
+        "user": {
+          "title": "Raum hinzufügen",
+          "data": {
+            "name": "Name",
+            "climate_entities": "Thermostate",
+            "sync_thermostats": "Thermostate synchronisieren",
+            "hold_policy": "Verhalten bei manueller Änderung",
+            "hold_minutes": "Haltedauer (Minuten)",
+            "use_external": "Externen Temperatursensor verwenden"
+          },
+          "data_description": {
+            "climate_entities": "Alle Thermostate dieses Raums. Sie folgen demselben Zeitplan.",
+            "sync_thermostats": "Eine manuelle Änderung an einem Thermostat wird auf die anderen im Raum übertragen.",
+            "hold_policy": "Was passiert, wenn jemand die Solltemperatur am Thermostat ändert.",
+            "hold_minutes": "Wird nur für „Für eine Dauer halten“ verwendet.",
+            "use_external": "Überträgt einen Raumtemperatursensor an die Thermostate (Sonoff TRVZB über Zigbee2MQTT)."
+          }
+        },
+        "reconfigure": {
+          "title": "Raumeinstellungen",
+          "data": {
+            "name": "Name",
+            "climate_entities": "Thermostate",
+            "sync_thermostats": "Thermostate synchronisieren",
+            "hold_policy": "Verhalten bei manueller Änderung",
+            "hold_minutes": "Haltedauer (Minuten)",
+            "use_external": "Externen Temperatursensor verwenden"
+          },
+          "data_description": {
+            "climate_entities": "Alle Thermostate dieses Raums. Sie folgen demselben Zeitplan.",
+            "sync_thermostats": "Eine manuelle Änderung an einem Thermostat wird auf die anderen im Raum übertragen.",
+            "hold_policy": "Was passiert, wenn jemand die Solltemperatur am Thermostat ändert.",
+            "hold_minutes": "Wird nur für „Für eine Dauer halten“ verwendet.",
+            "use_external": "Überträgt einen Raumtemperatursensor an die Thermostate (Sonoff TRVZB über Zigbee2MQTT)."
+          }
+        },
+        "external": {
+          "title": "Externer Temperatursensor",
+          "description": "Wähle den Temperatursensor des Raums. In den nächsten Schritten werden die Thermostat-Entitäten zugeordnet, die den Wert erhalten.",
+          "data": {
+            "sensor": "Temperatursensor",
+            "min_change": "Mindeständerung (K)",
+            "min_interval": "Mindestabstand (Sekunden)",
+            "heartbeat_minutes": "Heartbeat (Minuten)",
+            "grace_minutes": "Karenzzeit bei Sensorausfall (Minuten)",
+            "fallback": "Bei Sensorausfall",
+            "remote_option": "Option für externen Sensor",
+            "local_option": "Option für internen Sensor"
+          },
+          "data_description": {
+            "min_change": "Kleinere Änderungen werden nicht gesendet, um die Batterien zu schonen.",
+            "min_interval": "Nie häufiger als dieser Abstand senden.",
+            "heartbeat_minutes": "Wert regelmäßig erneut senden, damit das Thermostat nicht auf den eigenen Sensor zurückfällt. 0 deaktiviert.",
+            "grace_minutes": "Wie lange der Sensor ausfallen darf, bevor der Fallback greift.",
+            "fallback": "Thermostate auf den internen Sensor zurücksetzen oder den letzten Wert weitersenden.",
+            "remote_option": "Wert des Modus-Selects, bei dem das Thermostat den externen Sensor nutzt (Sonoff TRVZB: remote_temperature).",
+            "local_option": "Wert, bei dem es wieder den eigenen Sensor nutzt, für den Fallback (Sonoff TRVZB: local_temperature)."
+          }
+        },
+        "external_trv": {
+          "title": "Thermostat-Entitäten",
+          "description": "Entitäten von **{climate}** (wenn möglich automatisch vom selben Gerät erkannt).",
+          "data": {
+            "number": "Externe Temperatur (Number)",
+            "select": "Temperatursensor-Modus (Select, optional)"
+          },
+          "data_description": {
+            "number": "Die Entität, die die Raumtemperatur erhält. Vorausgewählt, wenn sie auf dem Gerät des Thermostats erkannt wird; für andere Thermostatmodelle änderbar.",
+            "select": "Die Entität, die das Thermostat zwischen internem und externem Sensor umschaltet. Leer lassen, wenn es keine gibt; dann wird nur der Temperaturwert gesendet."
+          }
+        }
+      },
+      "error": {
+        "no_thermostat": "Mindestens ein Thermostat auswählen.",
+        "climate_in_use": "Eines der Thermostate gehört bereits zu einem anderen Raum."
+      },
+      "abort": {
+        "reconfigure_successful": "Raum aktualisiert."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Thermostat Schedule",
+        "menu_options": {
+          "schedule": "Zeitpläne bearbeiten",
+          "profiles": "Profile",
+          "rules": "Auslöse-Regeln",
+          "finish": "Fertig"
+        }
+      },
+      "schedule": {
+        "title": "Zeitpläne bearbeiten",
+        "description": "Wähle den Raum, dessen Zeitplan bearbeitet werden soll.",
+        "data": {
+          "room": "Raum"
+        }
+      },
+      "schedule_profile": {
+        "title": "Zeitpläne bearbeiten",
+        "description": "Raum: **{room}**. Wähle das zu bearbeitende Profil.",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "schedule_day": {
+        "title": "Zeitplan",
+        "description": "**{room}** – Profil **{profile}**\n\n{summary}\n\nWähle einen Tag zum Bearbeiten.",
+        "menu_options": {
+          "edit_day_mon": "Montag",
+          "edit_day_tue": "Dienstag",
+          "edit_day_wed": "Mittwoch",
+          "edit_day_thu": "Donnerstag",
+          "edit_day_fri": "Freitag",
+          "edit_day_sat": "Samstag",
+          "edit_day_sun": "Sonntag",
+          "schedule_profile": "Anderes Profil wählen",
+          "init": "Zurück"
+        }
+      },
+      "edit_day_mon": {
+        "title": "Montag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_tue": {
+        "title": "Dienstag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_wed": {
+        "title": "Mittwoch",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_thu": {
+        "title": "Donnerstag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_fri": {
+        "title": "Freitag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_sat": {
+        "title": "Samstag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "edit_day_sun": {
+        "title": "Sonntag",
+        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "data": {
+          "schedule": "Schaltpunkte",
+          "copy_to": "Auch anwenden auf"
+        },
+        "data_description": {
+          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "copy_to": "Diesen Tag auf weitere Tage kopieren."
+        }
+      },
+      "profiles": {
+        "title": "Profile",
+        "description": "Aktuelle Profile: **{profiles}**",
+        "menu_options": {
+          "profile_add": "Profil hinzufügen",
+          "profile_rename": "Profil umbenennen",
+          "profile_delete": "Profil löschen",
+          "init": "Zurück"
+        }
+      },
+      "profile_add": {
+        "title": "Profil hinzufügen",
+        "data": {
+          "new_name": "Name",
+          "copy_from": "Zeitpläne kopieren von"
+        },
+        "data_description": {
+          "copy_from": "Optional. Standard ist ein vorgegebener Tagesplan."
+        }
+      },
+      "profile_rename": {
+        "title": "Profil umbenennen",
+        "data": {
+          "profile": "Profil",
+          "new_name": "Name"
+        }
+      },
+      "profile_delete": {
+        "title": "Profil löschen",
+        "description": "Die Räume verlieren die Zeitpläne dieses Profils. Profile, die von einer Regel verwendet werden, können nicht gelöscht werden.",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "rules": {
+        "title": "Auslöse-Regeln",
+        "description": "Regeln überlagern das Basisprofil. Die aktive Regel mit der höchsten Priorität gewinnt.\n\n{rules}",
+        "menu_options": {
+          "rule_add": "Regel hinzufügen",
+          "rule_edit": "Regel bearbeiten",
+          "rule_delete": "Regel löschen",
+          "init": "Zurück"
+        }
+      },
+      "rule_add": {
+        "title": "Regel hinzufügen",
+        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil.",
+        "data": {
+          "name": "Name",
+          "scope": "Gilt für",
+          "entities": "Entitäten",
+          "match": "Abgleich",
+          "state": "Zustand",
+          "for_minutes": "Erst nach (Minuten)",
+          "profile": "Wechsle zu Profil",
+          "priority": "Priorität"
+        },
+        "data_description": {
+          "scope": "Alle Räume dieses Hubs oder ein einzelner Raum.",
+          "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
+          "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
+          "state": "Zu vergleichender Zustand, z. B. not_home oder on.",
+          "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
+          "priority": "Höher gewinnt."
+        }
+      },
+      "rule_edit": {
+        "title": "Regel bearbeiten",
+        "data": {
+          "rule": "Regel"
+        }
+      },
+      "rule_edit_form": {
+        "title": "Regel bearbeiten",
+        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil.",
+        "data": {
+          "name": "Name",
+          "scope": "Gilt für",
+          "entities": "Entitäten",
+          "match": "Abgleich",
+          "state": "Zustand",
+          "for_minutes": "Erst nach (Minuten)",
+          "profile": "Wechsle zu Profil",
+          "priority": "Priorität"
+        },
+        "data_description": {
+          "scope": "Alle Räume dieses Hubs oder ein einzelner Raum.",
+          "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
+          "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
+          "state": "Zu vergleichender Zustand, z. B. not_home oder on.",
+          "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
+          "priority": "Höher gewinnt."
+        }
+      },
+      "rule_delete": {
+        "title": "Regel löschen",
+        "data": {
+          "rule": "Regel"
+        }
+      }
+    },
+    "error": {
+      "invalid_format": "Eine Zeile pro Schaltpunkt, z. B.: 06:00 21",
+      "empty_day": "Mindestens einen Schaltpunkt eingeben.",
+      "too_many_points": "Zu viele Schaltpunkte (maximal 12).",
+      "first_point_midnight": "Der erste Schaltpunkt muss 00:00 sein.",
+      "invalid_time": "Ungültige Uhrzeit.",
+      "not_increasing": "Uhrzeiten müssen aufsteigend und ohne Duplikate sein.",
+      "temp_range": "Temperaturen müssen zwischen 4 und 35 °C liegen.",
+      "invalid_profiles": "Namen eingeben (max. 40 Zeichen).",
+      "profile_exists": "Ein Profil mit diesem Namen existiert bereits.",
+      "last_profile": "Das letzte Profil kann nicht gelöscht werden.",
+      "profile_in_use": "Eine Regel verwendet dieses Profil noch.",
+      "no_entities": "Mindestens eine Entität auswählen.",
+      "no_state": "Zu vergleichenden Zustand eingeben."
+    },
+    "abort": {
+      "no_rooms": "Zuerst einen Raum hinzufügen (Schaltfläche „Raum hinzufügen“ auf der Integrationsseite)."
+    }
+  },
+  "entity": {
+    "switch": {
+      "enabled": {
+        "name": "Heizungszeitpläne"
+      },
+      "auto": {
+        "name": "Automatikmodus"
+      }
+    },
+    "select": {
+      "base_profile": {
+        "name": "Basisprofil"
+      },
+      "profile": {
+        "name": "Profil",
+        "state": {
+          "follow_hub": "Hub folgen"
+        }
+      }
+    },
+    "button": {
+      "resume_schedule": {
+        "name": "Zeitplan fortsetzen"
+      }
+    },
+    "sensor": {
+      "effective_mode": {
+        "name": "Aktiver Modus"
+      },
+      "target_temperature": {
+        "name": "Solltemperatur"
+      },
+      "active_profile": {
+        "name": "Aktives Profil"
+      },
+      "external_temperature_status": {
+        "name": "Status externe Temperatur",
+        "state": {
+          "idle": "Leerlauf",
+          "ok": "OK",
+          "sensor_unavailable": "Sensor nicht verfügbar",
+          "fallback": "Interner Sensor aktiv"
+        }
+      }
+    }
+  },
+  "selector": {
+    "hold_policy": {
+      "options": {
+        "next_switch": "Bis zum nächsten Schaltpunkt halten",
+        "duration": "Für eine Dauer halten",
+        "until_resumed": "Bis zur Fortsetzung halten",
+        "ignore": "Ignorieren (Zeitplan wiederherstellen)"
+      }
+    },
+    "fallback": {
+      "options": {
+        "internal": "Internen Sensor verwenden",
+        "keep": "Letzten Wert weitersenden"
+      }
+    },
+    "match": {
+      "options": {
+        "any": "Eine Entität",
+        "all": "Alle Entitäten"
+      }
+    },
+    "days": {
+      "options": {
+        "mon": "Montag",
+        "tue": "Dienstag",
+        "wed": "Mittwoch",
+        "thu": "Donnerstag",
+        "fri": "Freitag",
+        "sat": "Samstag",
+        "sun": "Sonntag"
+      }
+    }
+  },
+  "services": {
+    "set_override": {
+      "name": "Override setzen",
+      "description": "Setzt eine manuelle Raumtemperatur, die den Zeitplan bis zum nächsten Schaltpunkt (oder der angegebenen Dauer) ersetzt.",
+      "fields": {
+        "temperature": {
+          "name": "Temperatur",
+          "description": "Solltemperatur in °C."
+        },
+        "duration": {
+          "name": "Dauer",
+          "description": "Optionale Haltezeit. Standard folgt dem Verhalten bei manueller Änderung des Raums."
+        }
+      }
+    }
+  }
+}
