@@ -30,6 +30,8 @@
           "data": {
             "name": "Name",
             "climate_entities": "Thermostats",
+            "eco_temperature": "Eco temperature",
+            "comfort_temperature": "Comfort temperature",
             "sync_thermostats": "Keep thermostats in sync",
             "hold_policy": "Manual change behavior",
             "hold_minutes": "Hold duration (minutes)",
@@ -37,6 +39,8 @@
           },
           "data_description": {
             "climate_entities": "All thermostats of this room. They follow the same schedule.",
+            "eco_temperature": "Temperature for the `eco` preset in schedules (default 19). Schedules refer to it by name, so one schedule can serve rooms with different temperatures.",
+            "comfort_temperature": "Temperature for the `comfort` preset in schedules (default 21.5).",
             "sync_thermostats": "A manual change on one thermostat is copied to the others in this room.",
             "hold_policy": "What happens when someone changes the target temperature on a thermostat.",
             "hold_minutes": "Only used by the \"Hold for a duration\" behavior.",
@@ -45,9 +49,21 @@
         },
         "reconfigure": {
           "title": "Room settings",
+          "description": "Room **{room}**. Schedules follow the hub defaults unless you override them here.",
+          "menu_options": {
+            "settings": "Thermostats & settings",
+            "schedule": "Schedule overrides",
+            "rules": "Room-specific rules",
+            "finish": "Finish"
+          }
+        },
+        "settings": {
+          "title": "Thermostats & settings",
           "data": {
             "name": "Name",
             "climate_entities": "Thermostats",
+            "eco_temperature": "Eco temperature",
+            "comfort_temperature": "Comfort temperature",
             "sync_thermostats": "Keep thermostats in sync",
             "hold_policy": "Manual change behavior",
             "hold_minutes": "Hold duration (minutes)",
@@ -55,6 +71,8 @@
           },
           "data_description": {
             "climate_entities": "All thermostats of this room. They follow the same schedule.",
+            "eco_temperature": "Temperature for the `eco` preset in schedules (default 19). Schedules refer to it by name, so one schedule can serve rooms with different temperatures.",
+            "comfort_temperature": "Temperature for the `comfort` preset in schedules (default 21.5).",
             "sync_thermostats": "A manual change on one thermostat is copied to the others in this room.",
             "hold_policy": "What happens when someone changes the target temperature on a thermostat.",
             "hold_minutes": "Only used by the \"Hold for a duration\" behavior.",
@@ -95,11 +113,211 @@
             "number": "The entity that receives the room temperature. Pre-selected when detected on the thermostat's device; change it for other thermostat models.",
             "select": "The entity that switches the thermostat between its internal and the external sensor. Leave empty if the thermostat has none; then only the temperature value is sent."
           }
+        },
+        "schedule": {
+          "title": "Schedule overrides",
+          "description": "**{scope}** follows the hub's default schedule unless a day is overridden. Choose the profile.",
+          "data": {
+            "profile": "Profile"
+          }
+        },
+        "schedule_day": {
+          "title": "Schedule overrides",
+          "description": "**{scope}** – profile **{profile}**  (✎ = overrides the hub default)\n\n{summary}\n\nChoose a day to edit.",
+          "menu_options": {
+            "edit_day_mon": "Monday",
+            "edit_day_tue": "Tuesday",
+            "edit_day_wed": "Wednesday",
+            "edit_day_thu": "Thursday",
+            "edit_day_fri": "Friday",
+            "edit_day_sat": "Saturday",
+            "edit_day_sun": "Sunday",
+            "schedule_reset": "Reset profile to hub defaults",
+            "schedule": "Choose another profile",
+            "reconfigure": "Back"
+          }
+        },
+        "edit_day_mon": {
+          "title": "Monday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_tue": {
+          "title": "Tuesday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_wed": {
+          "title": "Wednesday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_thu": {
+          "title": "Thursday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_fri": {
+          "title": "Friday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_sat": {
+          "title": "Saturday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "edit_day_sun": {
+          "title": "Sunday",
+          "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Switch points",
+            "copy_to": "Also apply to",
+            "use_default": "Use hub default"
+          },
+          "data_description": {
+            "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
+            "copy_to": "Copy this day to other days.",
+            "use_default": "Remove this room's override for the day (and the selected days) and follow the hub default again."
+          }
+        },
+        "rules": {
+          "title": "Room-specific rules",
+          "description": "Rules for this room only. They compete with the hub's global rules by priority: the highest-priority active rule wins.\n\n{rules}",
+          "menu_options": {
+            "rule_add": "Add rule",
+            "rule_edit": "Edit rule",
+            "rule_delete": "Delete rule",
+            "reconfigure": "Back"
+          }
+        },
+        "rule_add": {
+          "title": "Add rule",
+          "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again. Unavailable entities never match.",
+          "data": {
+            "name": "Name",
+            "entities": "Entities",
+            "match": "Match",
+            "operator": "Entity state",
+            "states": "State(s)",
+            "for_minutes": "Only after (minutes)",
+            "profile": "Switch to profile",
+            "priority": "Priority"
+          },
+          "data_description": {
+            "entities": "For example a person, an input boolean or a binary sensor.",
+            "match": "Whether any or all entities must have the state.",
+            "operator": "\"is\": any listed state matches. \"is not\": any state except the listed ones matches (e.g. every zone but home).",
+            "states": "Pick or type states, e.g. home or not_home. Several values are allowed.",
+            "for_minutes": "The condition must hold this long before the rule becomes active.",
+            "priority": "Higher wins (across global and room rules)."
+          }
+        },
+        "rule_edit": {
+          "title": "Edit rule",
+          "data": {
+            "rule": "Rule"
+          }
+        },
+        "rule_edit_form": {
+          "title": "Edit rule",
+          "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again. Unavailable entities never match.",
+          "data": {
+            "name": "Name",
+            "entities": "Entities",
+            "match": "Match",
+            "operator": "Entity state",
+            "states": "State(s)",
+            "for_minutes": "Only after (minutes)",
+            "profile": "Switch to profile",
+            "priority": "Priority"
+          },
+          "data_description": {
+            "entities": "For example a person, an input boolean or a binary sensor.",
+            "match": "Whether any or all entities must have the state.",
+            "operator": "\"is\": any listed state matches. \"is not\": any state except the listed ones matches (e.g. every zone but home).",
+            "states": "Pick or type states, e.g. home or not_home. Several values are allowed.",
+            "for_minutes": "The condition must hold this long before the rule becomes active.",
+            "priority": "Higher wins (across global and room rules)."
+          }
+        },
+        "rule_delete": {
+          "title": "Delete rule",
+          "data": {
+            "rule": "Rule"
+          }
         }
       },
       "error": {
         "no_thermostat": "Select at least one thermostat.",
-        "climate_in_use": "One of these thermostats already belongs to another room."
+        "climate_in_use": "One of these thermostats already belongs to another room.",
+        "invalid_format": "Use one line per switch point, for example: 08:00 comfort or 19:00 21.5 (preset name or number, dot for half degrees)",
+        "empty_day": "Enter at least one switch point.",
+        "too_many_points": "Too many switch points (maximum 12).",
+        "first_point_midnight": "The first switch point must be 00:00.",
+        "invalid_time": "Invalid time.",
+        "not_increasing": "Times must be strictly increasing without duplicates.",
+        "temp_range": "Temperatures must be between 4 and 35 °C.",
+        "invalid_profiles": "Enter a name (max. 40 characters).",
+        "profile_exists": "A profile with this name already exists.",
+        "last_profile": "The last profile cannot be deleted.",
+        "profile_in_use": "A rule still uses this profile.",
+        "no_entities": "Select at least one entity.",
+        "no_state": "Enter the state to match."
       },
       "abort": {
         "reconfigure_successful": "Room updated."
@@ -110,30 +328,24 @@
     "step": {
       "init": {
         "title": "Thermostat Schedule",
+        "description": "Default schedules, profiles and global rules apply to every room of this hub. Room-specific schedules and rules are set in each room's settings (Rooms → ⋮ → Reconfigure).",
         "menu_options": {
-          "schedule": "Edit schedules",
+          "schedule": "Default schedules",
           "profiles": "Profiles",
-          "rules": "Trigger rules",
+          "rules": "Global trigger rules",
           "finish": "Finish"
         }
       },
       "schedule": {
-        "title": "Edit schedules",
-        "description": "Choose the room whose schedule you want to edit.",
-        "data": {
-          "room": "Room"
-        }
-      },
-      "schedule_profile": {
-        "title": "Edit schedules",
-        "description": "Room: **{room}**. Choose the profile to edit.",
+        "title": "Default schedules",
+        "description": "These defaults apply to all rooms of **{scope}**. Rooms can override single days in their own settings. Choose the profile to edit.",
         "data": {
           "profile": "Profile"
         }
       },
       "schedule_day": {
-        "title": "Schedule",
-        "description": "**{room}** – profile **{profile}**\n\n{summary}\n\nChoose a day to edit.",
+        "title": "Default schedules",
+        "description": "**Default schedule** – profile **{profile}**\n\n{summary}\n\nChoose a day to edit.",
         "menu_options": {
           "edit_day_mon": "Monday",
           "edit_day_tue": "Tuesday",
@@ -142,91 +354,91 @@
           "edit_day_fri": "Friday",
           "edit_day_sat": "Saturday",
           "edit_day_sun": "Sunday",
-          "schedule_profile": "Choose another profile",
+          "schedule": "Choose another profile",
           "init": "Back"
         }
       },
       "edit_day_mon": {
         "title": "Monday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_tue": {
         "title": "Tuesday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_wed": {
         "title": "Wednesday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_thu": {
         "title": "Thursday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_fri": {
         "title": "Friday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_sat": {
         "title": "Saturday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
       "edit_day_sun": {
         "title": "Sunday",
-        "description": "Room **{room}**, profile **{profile}**. One line per switch point: `HH:MM temperature`. Each temperature applies until the next line. Without a 00:00 line, the last temperature carries over midnight.",
+        "description": "Scope: **{scope}**, profile **{profile}**. One line per switch point as `HH:MM temperature`; each temperature applies until the next line. The temperature is either a preset name (`eco` or `comfort`, set per room) or a number in °C – use a dot for half degrees (`21.5`). Without a 00:00 line, the last temperature carries over midnight.\n\nExample:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Switch points",
           "copy_to": "Also apply to"
         },
         "data_description": {
-          "schedule": "Example: 06:00 21 / 22:00 17",
+          "schedule": "One line per switch point, e.g. 08:00 comfort or 19:00 23.5 (dot for half degrees)",
           "copy_to": "Copy this day to other days."
         }
       },
@@ -265,8 +477,8 @@
         }
       },
       "rules": {
-        "title": "Trigger rules",
-        "description": "Rules overlay the base profile. The highest-priority active rule wins.\n\n{rules}",
+        "title": "Global trigger rules",
+        "description": "These rules apply to all rooms of this hub. Room-specific rules are set in each room's settings. Rules overlay the base profile; the highest-priority active rule wins.\n\n{rules}",
         "menu_options": {
           "rule_add": "Add rule",
           "rule_edit": "Edit rule",
@@ -276,24 +488,24 @@
       },
       "rule_add": {
         "title": "Add rule",
-        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again.",
+        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again. Unavailable entities never match.",
         "data": {
           "name": "Name",
-          "scope": "Applies to",
           "entities": "Entities",
           "match": "Match",
-          "state": "State",
+          "operator": "Entity state",
+          "states": "State(s)",
           "for_minutes": "Only after (minutes)",
           "profile": "Switch to profile",
           "priority": "Priority"
         },
         "data_description": {
-          "scope": "All rooms of this hub, or a single room.",
           "entities": "For example a person, an input boolean or a binary sensor.",
           "match": "Whether any or all entities must have the state.",
-          "state": "State to match, for example not_home or on.",
+          "operator": "\"is\": any listed state matches. \"is not\": any state except the listed ones matches (e.g. every zone but home).",
+          "states": "Pick or type states, e.g. home or not_home. Several values are allowed.",
           "for_minutes": "The condition must hold this long before the rule becomes active.",
-          "priority": "Higher wins."
+          "priority": "Higher wins (across global and room rules)."
         }
       },
       "rule_edit": {
@@ -304,24 +516,24 @@
       },
       "rule_edit_form": {
         "title": "Edit rule",
-        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again.",
+        "description": "Switch to a profile while the condition holds. When it ends, the base profile applies again. Unavailable entities never match.",
         "data": {
           "name": "Name",
-          "scope": "Applies to",
           "entities": "Entities",
           "match": "Match",
-          "state": "State",
+          "operator": "Entity state",
+          "states": "State(s)",
           "for_minutes": "Only after (minutes)",
           "profile": "Switch to profile",
           "priority": "Priority"
         },
         "data_description": {
-          "scope": "All rooms of this hub, or a single room.",
           "entities": "For example a person, an input boolean or a binary sensor.",
           "match": "Whether any or all entities must have the state.",
-          "state": "State to match, for example not_home or on.",
+          "operator": "\"is\": any listed state matches. \"is not\": any state except the listed ones matches (e.g. every zone but home).",
+          "states": "Pick or type states, e.g. home or not_home. Several values are allowed.",
           "for_minutes": "The condition must hold this long before the rule becomes active.",
-          "priority": "Higher wins."
+          "priority": "Higher wins (across global and room rules)."
         }
       },
       "rule_delete": {
@@ -332,7 +544,7 @@
       }
     },
     "error": {
-      "invalid_format": "Use one line per switch point, for example: 06:00 21",
+      "invalid_format": "Use one line per switch point, for example: 08:00 comfort or 19:00 21.5 (preset name or number, dot for half degrees)",
       "empty_day": "Enter at least one switch point.",
       "too_many_points": "Too many switch points (maximum 12).",
       "first_point_midnight": "The first switch point must be 00:00.",
@@ -345,9 +557,6 @@
       "profile_in_use": "A rule still uses this profile.",
       "no_entities": "Select at least one entity.",
       "no_state": "Enter the state to match."
-    },
-    "abort": {
-      "no_rooms": "Add a room first (use the \"Add room\" button on the integration page)."
     }
   },
   "entity": {
@@ -415,6 +624,12 @@
       "options": {
         "any": "Any entity",
         "all": "All entities"
+      }
+    },
+    "operator": {
+      "options": {
+        "is": "is",
+        "is_not": "is not"
       }
     },
     "days": {

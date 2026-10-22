@@ -455,7 +455,7 @@ otherwise the first available TRV's value is adopted as the room value); externa
 
 ## 9. Implementation status
 
-Done (57 tests, `pytest` + `ruff` green against HA 2026.10): scaffold/HACS layout, pure engine
+Done (69 tests, `pytest` + `ruff` green against HA 2026.10): scaffold/HACS layout, pure engine
 (`models`, `schedule`, `resolver`), rule engine, store, room controller (auto/manual, master switch,
 pin, overrides, multi-TRV sync with echo suppression), external sensor sync (TRVZB/Z2M), multi-hub
 config flow, room subentry flow, options flow (schedules, profiles, rules), services, en/de translations, CI.
@@ -475,3 +475,21 @@ Deviations from the plan above:
   `remote_source_offline`. The firmware's stale-value timeout is undocumented, hence the heartbeat.
 - **Card + HACS:** HACS installs one category per repository, so the card will be shipped inside the integration
   (`custom_components/thermostat_schedule/frontend/`) and registered by it; one HACS install provides both.
+
+### Update after first hands-on test
+
+- **Default schedules in the hub, overrides per room.** Storage is now `defaults` (per profile) plus sparse
+  per-room, per-day `overrides`; a room's effective week is its overrides on top of the hub defaults. Old
+  storage (full schedules per room) is migrated on load: the first room becomes the default, differing days
+  become overrides.
+- **Settings live where they belong.** Hub options: default schedules, profiles, global rules. Room
+  (subentry) reconfigure is now a menu: settings, schedule overrides, room-specific rules. This was possible
+  all along: subentry flows can be multi-step; the first version simply put everything into the options flow.
+- **Rules:** `operator` (`is` / `is not`) and a list of `states`; legacy single `state` strings still work.
+  Room rules are stored in the room's subentry data; global rules in the hub options.
+- **Default day** is now `00:00 19`, `08:00 21.5`, `22:30 19`; the editor hint documents dot decimals.
+- **Temperature presets:** each room has an `eco` (default 19 °C) and a `comfort` (default 21.5 °C) preset. A switch
+  point's temperature is a preset name or a number; the default day is `00:00 eco`, `08:00 comfort`, `22:30 eco`.
+  Presets are stored in the room's settings and resolved at evaluation time, so editing a preset updates every
+  schedule that uses it. Existing literal numbers keep working (stored schedules are not rewritten). Presets are
+  per room only for now; hub-level preset defaults would be a small addition if wanted.

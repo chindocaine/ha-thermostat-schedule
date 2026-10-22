@@ -62,3 +62,29 @@ def test_unavailable_never_satisfies() -> None:
     rule = {"entities": ["person.a"], "state": "not_home", "match": "any"}
     assert not condition_met(rule, {"person.a": "unavailable"})
     assert not condition_met(rule, {"person.a": None})
+
+
+def test_is_not_with_several_states_covers_all_zones() -> None:
+    rule = {
+        "entities": ["person.a"],
+        "operator": "is_not",
+        "states": ["home"],
+        "match": "any",
+    }
+    assert condition_met(rule, {"person.a": "not_home"})
+    assert condition_met(rule, {"person.a": "Work"})  # any other zone counts as away
+    assert not condition_met(rule, {"person.a": "home"})
+    # unavailable never matches, not even "is not"
+    assert not condition_met(rule, {"person.a": "unavailable"})
+    assert not condition_met(rule, {"person.a": None})
+
+
+def test_is_with_several_states() -> None:
+    rule = {"entities": ["person.a"], "operator": "is", "states": ["home", "work"], "match": "any"}
+    assert condition_met(rule, {"person.a": "work"})
+    assert not condition_met(rule, {"person.a": "gym"})
+
+
+def test_legacy_comma_separated_state() -> None:
+    rule = {"entities": ["person.a"], "state": "home, work", "match": "any"}
+    assert condition_met(rule, {"person.a": "work"})

@@ -9,6 +9,7 @@ from custom_components.thermostat_schedule.models import (
     day_to_json,
     format_day,
     parse_day,
+    resolve_temp,
 )
 
 
@@ -57,3 +58,34 @@ def test_roundtrip() -> None:
     points = parse_day("00:00 17\n06:30 21.5")
     assert format_day(points) == "00:00 17\n06:30 21.5"
     assert day_from_json(day_to_json(points)) == points
+
+
+def test_presets_and_literal_temperatures_can_be_mixed() -> None:
+    expected = [
+        SwitchPoint(0, "eco"),
+        SwitchPoint(480, "comfort"),
+        SwitchPoint(1140, 23.0),
+        SwitchPoint(1350, "eco"),
+    ]
+    assert parse_day("00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco") == expected
+    # the inline, comma separated notation works too (also with decimal commas)
+    assert parse_day("00:00 eco, 08:00 comfort, 19:00 23, 22:30 eco") == expected
+    assert parse_day("00:00 eco, 08:00 21,5")[1] == SwitchPoint(480, 21.5)
+    assert parse_day("00:00 ECO\n08:00 Comfort") == [
+        SwitchPoint(0, "eco"),
+        SwitchPoint(480, "comfort"),
+    ]
+
+
+def test_preset_roundtrip_and_resolution() -> None:
+    points = parse_day("00:00 eco, 08:00 comfort, 19:00 23")
+    assert format_day(points) == "00:00 eco\n08:00 comfort\n19:00 23"
+    assert day_from_json(day_to_json(points)) == points
+    presets = {"eco": 17.0, "comfort": 22.5}
+    assert [resolve_temp(p.temp, presets) for p in points] == [17.0, 22.5, 23.0]
+    assert resolve_temp("eco") == 19.0  # defaults without room presets
+
+
+def test_unknown_preset_is_rejected() -> None:
+    with pytest.raises(ScheduleError):
+        parse_day("00:00 party")

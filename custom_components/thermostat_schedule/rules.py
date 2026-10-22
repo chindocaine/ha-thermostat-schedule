@@ -13,25 +13,38 @@ from .const import (
     CONF_RULE_FOR_MINUTES,
     CONF_RULE_ID,
     CONF_RULE_MATCH,
+    CONF_RULE_OPERATOR,
     CONF_RULE_STATE,
+    CONF_RULE_STATES,
     MATCH_ALL,
+    OP_IS_NOT,
 )
+
+
+def rule_states(rule: Mapping[str, Any]) -> list[str]:
+    """Return the states a rule compares against (supports the legacy single-state key)."""
+    states = rule.get(CONF_RULE_STATES)
+    if states is None:
+        states = str(rule.get(CONF_RULE_STATE, "")).split(",")
+    return [s.strip() for s in states if s.strip()]
 
 
 def condition_met(rule: Mapping[str, Any], states: Mapping[str, str | None]) -> bool:
     """Return whether a rule's raw condition holds (ignoring the ``for`` delay).
 
-    Entities that do not exist or are unavailable/unknown never satisfy a rule, so a
-    flaky tracker cannot trigger a switch to e.g. "away".
+    An entity matches if its state is one of the rule's states ("is") or none of them
+    ("is not"). Entities that do not exist or are unavailable/unknown never match, not
+    even for "is not", so a flaky tracker cannot trigger a switch to e.g. "away".
     """
-    wanted = str(rule[CONF_RULE_STATE]).strip().lower()
+    wanted = {s.lower() for s in rule_states(rule)}
+    negate = rule.get(CONF_RULE_OPERATOR) == OP_IS_NOT
     results = []
     for entity_id in rule[CONF_RULE_ENTITIES]:
         state = states.get(entity_id)
         if state is None or state in ("unavailable", "unknown"):
             results.append(False)
         else:
-            results.append(state.strip().lower() == wanted)
+            results.append((state.strip().lower() in wanted) != negate)
     if not results:
         return False
     return all(results) if rule.get(CONF_RULE_MATCH) == MATCH_ALL else any(results)

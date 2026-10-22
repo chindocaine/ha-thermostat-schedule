@@ -22,10 +22,14 @@ CONF_RULE_PRIORITY = "priority"
 CONF_RULE_SCOPE = "scope"
 CONF_RULE_ENTITIES = "entities"
 CONF_RULE_MATCH = "match"
-CONF_RULE_STATE = "state"
+CONF_RULE_STATE = "state"  # legacy single (comma separated) state
+CONF_RULE_STATES = "states"
+CONF_RULE_OPERATOR = "operator"
 CONF_RULE_FOR_MINUTES = "for_minutes"
 
 SCOPE_ALL = "all"
+OP_IS = "is"
+OP_IS_NOT = "is_not"
 MATCH_ANY = "any"
 MATCH_ALL = "all"
 
@@ -73,6 +77,15 @@ DEFAULT_LOCAL_OPTION = "local_temperature"
 
 # Profile pin select: "follow the hub" option (internal value stored as None).
 PIN_FOLLOW_HUB = "follow_hub"
+
+# Temperature presets usable in schedules by name (per room).
+PRESET_ECO = "eco"
+PRESET_COMFORT = "comfort"
+PRESETS = (PRESET_ECO, PRESET_COMFORT)
+CONF_ECO_TEMP = "eco_temperature"
+CONF_COMFORT_TEMP = "comfort_temperature"
+DEFAULT_ECO_TEMP = 19.0
+DEFAULT_COMFORT_TEMP = 21.5
 
 # Schedule limits
 MIN_TEMP = 4.0

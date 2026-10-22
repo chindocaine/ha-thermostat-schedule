@@ -12,13 +12,15 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from .const import (
     CONF_BASE_PROFILE,
     CONF_PROFILES,
+    CONF_RULE_SCOPE,
     CONF_RULES,
+    DAYS,
     DEFAULT_PROFILES,
     DOMAIN,
     SUBENTRY_ROOM,
 )
 from .controller import RoomController
-from .models import DaySchedule, WeekSchedule
+from .models import DaySchedule, WeekSchedule, default_week
 from .resolver import Resolution, resolve_profile
 from .rules import RuleEngine
 from .store import HubStore
@@ -37,6 +39,7 @@ class HubRuntime:
         self.store = HubStore(hass, entry.entry_id)
         self.controllers: dict[str, RoomController] = {}
         self.rule_engine: RuleEngine | None = None
+        self.all_rules: list[dict[str, Any]] = []
         self.device_id: str | None = None
 
     # --- config views -------------------------------------------------------
@@ -96,7 +99,16 @@ class HubRuntime:
         )
         self.store.async_schedule_save()
 
-        self.rule_engine = RuleEngine(self.hass, self.rules, self._handle_rules_changed)
+        # Global rules plus every room's own rules, tagged with the room they apply to.
+        self.all_rules = [
+            *self.rules,
+            *(
+                {**rule, CONF_RULE_SCOPE: sid}
+                for sid, sub in rooms.items()
+                for rule in sub.data.get(CONF_RULES, [])
+            ),
+        ]
+        self.rule_engine = RuleEngine(self.hass, self.all_rules, self._handle_rules_changed)
         self.rule_engine.async_start()
         self.controllers = {sid: RoomController(self, sid, sub.data) for sid, sub in rooms.items()}
 
@@ -159,37 +171,69 @@ class HubRuntime:
         self.store.async_schedule_save()
         await self.controllers[room_id].async_reconcile()
 
+    # --- schedules ----------------------------------------------------------------
+
+    def default_week(self, profile: str) -> WeekSchedule:
+        """The hub's default week for a profile."""
+        return self.store.defaults[profile]
+
+    def effective_week(self, room_id: str, profile: str) -> WeekSchedule:
+        """A room's week: its own overrides on top of the hub defaults."""
+        overrides = self.store.rooms[room_id].overrides.get(profile, {})
+        defaults = self.store.defaults[profile]
+        return {day: overrides.get(day, defaults[day]) for day in DAYS}
+
+    def is_override(self, room_id: str, profile: str, day: str) -> bool:
+        """Whether a room customizes this day."""
+        return day in self.store.rooms[room_id].overrides.get(profile, {})
+
+    async def async_set_default_day(self, profile: str, day: str, points: DaySchedule) -> None:
+        """Replace one day of a hub default schedule; all rooms following it update."""
+        self.store.defaults[profile][day] = list(points)
+        self.store.async_schedule_save()
+        await self.async_reconcile_all()
+
     async def async_set_day(
-        self, room_id: str, profile: str, day: str, points: DaySchedule
+        self, room_id: str, profile: str, day: str, points: DaySchedule | None
     ) -> None:
-        """Replace one day of a room's profile and apply immediately."""
-        self.store.rooms[room_id].schedules[profile][day] = list(points)
+        """Override one day for a room (``None`` = back to the hub default)."""
+        overrides = self.store.rooms[room_id].overrides
+        if points is None:
+            overrides.get(profile, {}).pop(day, None)
+        else:
+            overrides.setdefault(profile, {})[day] = list(points)
         self.store.async_schedule_save()
         await self.controllers[room_id].async_reconcile()
 
-    def get_week(self, room_id: str, profile: str) -> WeekSchedule:
-        """Return a room's week for a profile."""
-        return self.store.rooms[room_id].schedules[profile]
+    async def async_reset_room_profile(self, room_id: str, profile: str) -> None:
+        """Drop all of a room's overrides for a profile."""
+        self.store.rooms[room_id].overrides.pop(profile, None)
+        self.store.async_schedule_save()
+        await self.controllers[room_id].async_reconcile()
 
     # --- profile maintenance (used by the options flow) ----------------------------
 
     def add_profile_schedules(self, name: str, copy_from: str | None) -> None:
-        """Give every room a schedule for a new profile."""
-        from .models import default_week
-
-        for room in self.store.rooms.values():
-            source = room.schedules.get(copy_from) if copy_from else None
-            room.schedules[name] = (
-                {d: list(p) for d, p in source.items()} if source else default_week()
-            )
+        """Create the default schedule (and room overrides) of a new profile."""
+        source = self.store.defaults.get(copy_from) if copy_from else None
+        self.store.defaults[name] = (
+            {d: list(p) for d, p in source.items()} if source else default_week()
+        )
+        if copy_from:
+            for room in self.store.rooms.values():
+                if copy_from in room.overrides:
+                    room.overrides[name] = {
+                        d: list(p) for d, p in room.overrides[copy_from].items()
+                    }
         self.store.async_schedule_save()
 
     def rename_profile_state(self, old: str, new: str) -> None:
         """Rename a profile in all stored state."""
         if self.store.base_profile == old:
             self.store.base_profile = new
+        self.store.defaults = {(new if p == old else p): w for p, w in self.store.defaults.items()}
         for room in self.store.rooms.values():
-            room.schedules = {(new if p == old else p): w for p, w in room.schedules.items()}
+            room.overrides = {(new if p == old else p): d for p, d in room.overrides.items()}
             if room.pin == old:
                 room.pin = new
         self.store.async_schedule_save()

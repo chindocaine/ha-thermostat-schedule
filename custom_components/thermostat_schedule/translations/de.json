@@ -30,6 +30,8 @@
           "data": {
             "name": "Name",
             "climate_entities": "Thermostate",
+            "eco_temperature": "Eco-Temperatur",
+            "comfort_temperature": "Komfort-Temperatur",
             "sync_thermostats": "Thermostate synchronisieren",
             "hold_policy": "Verhalten bei manueller Änderung",
             "hold_minutes": "Haltedauer (Minuten)",
@@ -37,6 +39,8 @@
           },
           "data_description": {
             "climate_entities": "Alle Thermostate dieses Raums. Sie folgen demselben Zeitplan.",
+            "eco_temperature": "Temperatur für das Preset `eco` in Zeitplänen (Standard 19). Zeitpläne verweisen per Namen darauf, so kann ein Zeitplan Räume mit unterschiedlichen Temperaturen bedienen.",
+            "comfort_temperature": "Temperatur für das Preset `comfort` in Zeitplänen (Standard 21,5).",
             "sync_thermostats": "Eine manuelle Änderung an einem Thermostat wird auf die anderen im Raum übertragen.",
             "hold_policy": "Was passiert, wenn jemand die Solltemperatur am Thermostat ändert.",
             "hold_minutes": "Wird nur für „Für eine Dauer halten“ verwendet.",
@@ -45,9 +49,21 @@
         },
         "reconfigure": {
           "title": "Raumeinstellungen",
+          "description": "Raum **{room}**. Zeitpläne folgen den Hub-Standards, solange du sie hier nicht überschreibst.",
+          "menu_options": {
+            "settings": "Thermostate & Einstellungen",
+            "schedule": "Zeitplan-Abweichungen",
+            "rules": "Raumspezifische Regeln",
+            "finish": "Fertig"
+          }
+        },
+        "settings": {
+          "title": "Thermostate & Einstellungen",
           "data": {
             "name": "Name",
             "climate_entities": "Thermostate",
+            "eco_temperature": "Eco-Temperatur",
+            "comfort_temperature": "Komfort-Temperatur",
             "sync_thermostats": "Thermostate synchronisieren",
             "hold_policy": "Verhalten bei manueller Änderung",
             "hold_minutes": "Haltedauer (Minuten)",
@@ -55,6 +71,8 @@
           },
           "data_description": {
             "climate_entities": "Alle Thermostate dieses Raums. Sie folgen demselben Zeitplan.",
+            "eco_temperature": "Temperatur für das Preset `eco` in Zeitplänen (Standard 19). Zeitpläne verweisen per Namen darauf, so kann ein Zeitplan Räume mit unterschiedlichen Temperaturen bedienen.",
+            "comfort_temperature": "Temperatur für das Preset `comfort` in Zeitplänen (Standard 21,5).",
             "sync_thermostats": "Eine manuelle Änderung an einem Thermostat wird auf die anderen im Raum übertragen.",
             "hold_policy": "Was passiert, wenn jemand die Solltemperatur am Thermostat ändert.",
             "hold_minutes": "Wird nur für „Für eine Dauer halten“ verwendet.",
@@ -95,11 +113,211 @@
             "number": "Die Entität, die die Raumtemperatur erhält. Vorausgewählt, wenn sie auf dem Gerät des Thermostats erkannt wird; für andere Thermostatmodelle änderbar.",
             "select": "Die Entität, die das Thermostat zwischen internem und externem Sensor umschaltet. Leer lassen, wenn es keine gibt; dann wird nur der Temperaturwert gesendet."
           }
+        },
+        "schedule": {
+          "title": "Zeitplan-Abweichungen",
+          "description": "**{scope}** folgt dem Standard-Zeitplan des Hubs, sofern ein Tag nicht überschrieben ist. Wähle das Profil.",
+          "data": {
+            "profile": "Profil"
+          }
+        },
+        "schedule_day": {
+          "title": "Zeitplan-Abweichungen",
+          "description": "**{scope}** – Profil **{profile}**  (✎ = überschreibt den Hub-Standard)\n\n{summary}\n\nWähle einen Tag zum Bearbeiten.",
+          "menu_options": {
+            "edit_day_mon": "Montag",
+            "edit_day_tue": "Dienstag",
+            "edit_day_wed": "Mittwoch",
+            "edit_day_thu": "Donnerstag",
+            "edit_day_fri": "Freitag",
+            "edit_day_sat": "Samstag",
+            "edit_day_sun": "Sonntag",
+            "schedule_reset": "Profil auf Hub-Standard zurücksetzen",
+            "schedule": "Anderes Profil wählen",
+            "reconfigure": "Zurück"
+          }
+        },
+        "edit_day_mon": {
+          "title": "Montag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_tue": {
+          "title": "Dienstag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_wed": {
+          "title": "Mittwoch",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_thu": {
+          "title": "Donnerstag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_fri": {
+          "title": "Freitag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_sat": {
+          "title": "Samstag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "edit_day_sun": {
+          "title": "Sonntag",
+          "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
+          "data": {
+            "schedule": "Schaltpunkte",
+            "copy_to": "Auch anwenden auf",
+            "use_default": "Hub-Standard verwenden"
+          },
+          "data_description": {
+            "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
+            "copy_to": "Diesen Tag auf weitere Tage kopieren.",
+            "use_default": "Entfernt die Abweichung dieses Raums für den Tag (und die gewählten Tage); es gilt wieder der Hub-Standard."
+          }
+        },
+        "rules": {
+          "title": "Raumspezifische Regeln",
+          "description": "Regeln nur für diesen Raum. Sie konkurrieren nach Priorität mit den globalen Regeln des Hubs: die aktive Regel mit der höchsten Priorität gewinnt.\n\n{rules}",
+          "menu_options": {
+            "rule_add": "Regel hinzufügen",
+            "rule_edit": "Regel bearbeiten",
+            "rule_delete": "Regel löschen",
+            "reconfigure": "Zurück"
+          }
+        },
+        "rule_add": {
+          "title": "Regel hinzufügen",
+          "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil. Nicht verfügbare Entitäten passen nie.",
+          "data": {
+            "name": "Name",
+            "entities": "Entitäten",
+            "match": "Abgleich",
+            "operator": "Zustand der Entität",
+            "states": "Zustand/Zustände",
+            "for_minutes": "Erst nach (Minuten)",
+            "profile": "Wechsle zu Profil",
+            "priority": "Priorität"
+          },
+          "data_description": {
+            "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
+            "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
+            "operator": "„ist“: jeder aufgeführte Zustand passt. „ist nicht“: jeder Zustand außer den aufgeführten passt (z. B. jede Zone außer home).",
+            "states": "Zustände auswählen oder eintippen, z. B. home oder not_home. Mehrere Werte sind möglich.",
+            "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
+            "priority": "Höher gewinnt (über globale und Raumregeln hinweg)."
+          }
+        },
+        "rule_edit": {
+          "title": "Regel bearbeiten",
+          "data": {
+            "rule": "Regel"
+          }
+        },
+        "rule_edit_form": {
+          "title": "Regel bearbeiten",
+          "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil. Nicht verfügbare Entitäten passen nie.",
+          "data": {
+            "name": "Name",
+            "entities": "Entitäten",
+            "match": "Abgleich",
+            "operator": "Zustand der Entität",
+            "states": "Zustand/Zustände",
+            "for_minutes": "Erst nach (Minuten)",
+            "profile": "Wechsle zu Profil",
+            "priority": "Priorität"
+          },
+          "data_description": {
+            "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
+            "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
+            "operator": "„ist“: jeder aufgeführte Zustand passt. „ist nicht“: jeder Zustand außer den aufgeführten passt (z. B. jede Zone außer home).",
+            "states": "Zustände auswählen oder eintippen, z. B. home oder not_home. Mehrere Werte sind möglich.",
+            "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
+            "priority": "Höher gewinnt (über globale und Raumregeln hinweg)."
+          }
+        },
+        "rule_delete": {
+          "title": "Regel löschen",
+          "data": {
+            "rule": "Regel"
+          }
         }
       },
       "error": {
         "no_thermostat": "Mindestens ein Thermostat auswählen.",
-        "climate_in_use": "Eines der Thermostate gehört bereits zu einem anderen Raum."
+        "climate_in_use": "Eines der Thermostate gehört bereits zu einem anderen Raum.",
+        "invalid_format": "Eine Zeile pro Schaltpunkt, z. B.: 08:00 comfort oder 19:00 21.5 (Preset-Name oder Zahl, Punkt für halbe Grad)",
+        "empty_day": "Mindestens einen Schaltpunkt eingeben.",
+        "too_many_points": "Zu viele Schaltpunkte (maximal 12).",
+        "first_point_midnight": "Der erste Schaltpunkt muss 00:00 sein.",
+        "invalid_time": "Ungültige Uhrzeit.",
+        "not_increasing": "Uhrzeiten müssen aufsteigend und ohne Duplikate sein.",
+        "temp_range": "Temperaturen müssen zwischen 4 und 35 °C liegen.",
+        "invalid_profiles": "Namen eingeben (max. 40 Zeichen).",
+        "profile_exists": "Ein Profil mit diesem Namen existiert bereits.",
+        "last_profile": "Das letzte Profil kann nicht gelöscht werden.",
+        "profile_in_use": "Eine Regel verwendet dieses Profil noch.",
+        "no_entities": "Mindestens eine Entität auswählen.",
+        "no_state": "Zu vergleichenden Zustand eingeben."
       },
       "abort": {
         "reconfigure_successful": "Raum aktualisiert."
@@ -110,30 +328,24 @@
     "step": {
       "init": {
         "title": "Thermostat Schedule",
+        "description": "Standard-Zeitpläne, Profile und globale Regeln gelten für alle Räume dieses Hubs. Raumspezifische Zeitpläne und Regeln werden in den Einstellungen des jeweiligen Raums vorgenommen (Räume → ⋮ → Neu konfigurieren).",
         "menu_options": {
-          "schedule": "Zeitpläne bearbeiten",
+          "schedule": "Standard-Zeitpläne",
           "profiles": "Profile",
-          "rules": "Auslöse-Regeln",
+          "rules": "Globale Auslöse-Regeln",
           "finish": "Fertig"
         }
       },
       "schedule": {
-        "title": "Zeitpläne bearbeiten",
-        "description": "Wähle den Raum, dessen Zeitplan bearbeitet werden soll.",
-        "data": {
-          "room": "Raum"
-        }
-      },
-      "schedule_profile": {
-        "title": "Zeitpläne bearbeiten",
-        "description": "Raum: **{room}**. Wähle das zu bearbeitende Profil.",
+        "title": "Standard-Zeitpläne",
+        "description": "Diese Standards gelten für alle Räume von **{scope}**. Räume können einzelne Tage in ihren eigenen Einstellungen überschreiben. Wähle das Profil.",
         "data": {
           "profile": "Profil"
         }
       },
       "schedule_day": {
-        "title": "Zeitplan",
-        "description": "**{room}** – Profil **{profile}**\n\n{summary}\n\nWähle einen Tag zum Bearbeiten.",
+        "title": "Standard-Zeitpläne",
+        "description": "**Standard-Zeitplan** – Profil **{profile}**\n\n{summary}\n\nWähle einen Tag zum Bearbeiten.",
         "menu_options": {
           "edit_day_mon": "Montag",
           "edit_day_tue": "Dienstag",
@@ -142,91 +354,91 @@
           "edit_day_fri": "Freitag",
           "edit_day_sat": "Samstag",
           "edit_day_sun": "Sonntag",
-          "schedule_profile": "Anderes Profil wählen",
+          "schedule": "Anderes Profil wählen",
           "init": "Zurück"
         }
       },
       "edit_day_mon": {
         "title": "Montag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_tue": {
         "title": "Dienstag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_wed": {
         "title": "Mittwoch",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_thu": {
         "title": "Donnerstag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_fri": {
         "title": "Freitag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_sat": {
         "title": "Samstag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
       "edit_day_sun": {
         "title": "Sonntag",
-        "description": "Raum **{room}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt: `HH:MM Temperatur`. Jede Temperatur gilt bis zur nächsten Zeile. Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.",
+        "description": "Bereich: **{scope}**, Profil **{profile}**. Eine Zeile pro Schaltpunkt als `HH:MM Temperatur`; jede Temperatur gilt bis zur nächsten Zeile. Die Temperatur ist entweder ein Preset-Name (`eco` oder `comfort`, pro Raum festgelegt) oder eine Zahl in °C – für halbe Grad einen Punkt verwenden (`21.5`). Ohne 00:00-Zeile wird die letzte Temperatur über Mitternacht fortgeführt.\n\nBeispiel:\n```\n00:00 eco\n08:00 comfort\n19:00 23\n22:30 eco\n```",
         "data": {
           "schedule": "Schaltpunkte",
           "copy_to": "Auch anwenden auf"
         },
         "data_description": {
-          "schedule": "Beispiel: 06:00 21 / 22:00 17",
+          "schedule": "Eine Zeile pro Schaltpunkt, z. B. 08:00 comfort oder 19:00 23.5 (Punkt für halbe Grad)",
           "copy_to": "Diesen Tag auf weitere Tage kopieren."
         }
       },
@@ -265,8 +477,8 @@
         }
       },
       "rules": {
-        "title": "Auslöse-Regeln",
-        "description": "Regeln überlagern das Basisprofil. Die aktive Regel mit der höchsten Priorität gewinnt.\n\n{rules}",
+        "title": "Globale Auslöse-Regeln",
+        "description": "Diese Regeln gelten für alle Räume dieses Hubs. Raumspezifische Regeln werden in den Einstellungen des Raums angelegt. Regeln überlagern das Basisprofil; die aktive Regel mit der höchsten Priorität gewinnt.\n\n{rules}",
         "menu_options": {
           "rule_add": "Regel hinzufügen",
           "rule_edit": "Regel bearbeiten",
@@ -276,24 +488,24 @@
       },
       "rule_add": {
         "title": "Regel hinzufügen",
-        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil.",
+        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil. Nicht verfügbare Entitäten passen nie.",
         "data": {
           "name": "Name",
-          "scope": "Gilt für",
           "entities": "Entitäten",
           "match": "Abgleich",
-          "state": "Zustand",
+          "operator": "Zustand der Entität",
+          "states": "Zustand/Zustände",
           "for_minutes": "Erst nach (Minuten)",
           "profile": "Wechsle zu Profil",
           "priority": "Priorität"
         },
         "data_description": {
-          "scope": "Alle Räume dieses Hubs oder ein einzelner Raum.",
           "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
           "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
-          "state": "Zu vergleichender Zustand, z. B. not_home oder on.",
+          "operator": "„ist“: jeder aufgeführte Zustand passt. „ist nicht“: jeder Zustand außer den aufgeführten passt (z. B. jede Zone außer home).",
+          "states": "Zustände auswählen oder eintippen, z. B. home oder not_home. Mehrere Werte sind möglich.",
           "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
-          "priority": "Höher gewinnt."
+          "priority": "Höher gewinnt (über globale und Raumregeln hinweg)."
         }
       },
       "rule_edit": {
@@ -304,24 +516,24 @@
       },
       "rule_edit_form": {
         "title": "Regel bearbeiten",
-        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil.",
+        "description": "Wechselt zu einem Profil, solange die Bedingung gilt. Danach gilt wieder das Basisprofil. Nicht verfügbare Entitäten passen nie.",
         "data": {
           "name": "Name",
-          "scope": "Gilt für",
           "entities": "Entitäten",
           "match": "Abgleich",
-          "state": "Zustand",
+          "operator": "Zustand der Entität",
+          "states": "Zustand/Zustände",
           "for_minutes": "Erst nach (Minuten)",
           "profile": "Wechsle zu Profil",
           "priority": "Priorität"
         },
         "data_description": {
-          "scope": "Alle Räume dieses Hubs oder ein einzelner Raum.",
           "entities": "Zum Beispiel eine Person, ein Eingabe-Schalter oder ein Binärsensor.",
           "match": "Ob eine oder alle Entitäten den Zustand haben müssen.",
-          "state": "Zu vergleichender Zustand, z. B. not_home oder on.",
+          "operator": "„ist“: jeder aufgeführte Zustand passt. „ist nicht“: jeder Zustand außer den aufgeführten passt (z. B. jede Zone außer home).",
+          "states": "Zustände auswählen oder eintippen, z. B. home oder not_home. Mehrere Werte sind möglich.",
           "for_minutes": "Die Bedingung muss so lange gelten, bevor die Regel aktiv wird.",
-          "priority": "Höher gewinnt."
+          "priority": "Höher gewinnt (über globale und Raumregeln hinweg)."
         }
       },
       "rule_delete": {
@@ -332,7 +544,7 @@
       }
     },
     "error": {
-      "invalid_format": "Eine Zeile pro Schaltpunkt, z. B.: 06:00 21",
+      "invalid_format": "Eine Zeile pro Schaltpunkt, z. B.: 08:00 comfort oder 19:00 21.5 (Preset-Name oder Zahl, Punkt für halbe Grad)",
       "empty_day": "Mindestens einen Schaltpunkt eingeben.",
       "too_many_points": "Zu viele Schaltpunkte (maximal 12).",
       "first_point_midnight": "Der erste Schaltpunkt muss 00:00 sein.",
@@ -345,9 +557,6 @@
       "profile_in_use": "Eine Regel verwendet dieses Profil noch.",
       "no_entities": "Mindestens eine Entität auswählen.",
       "no_state": "Zu vergleichenden Zustand eingeben."
-    },
-    "abort": {
-      "no_rooms": "Zuerst einen Raum hinzufügen (Schaltfläche „Raum hinzufügen“ auf der Integrationsseite)."
     }
   },
   "entity": {
@@ -415,6 +624,12 @@
       "options": {
         "any": "Eine Entität",
         "all": "Alle Entitäten"
+      }
+    },
+    "operator": {
+      "options": {
+        "is": "ist",
+        "is_not": "ist nicht"
       }
     },
     "days": {

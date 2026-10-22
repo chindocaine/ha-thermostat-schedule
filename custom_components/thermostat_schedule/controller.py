@@ -18,11 +18,15 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_CLIMATES,
+    CONF_COMFORT_TEMP,
+    CONF_ECO_TEMP,
     CONF_EXTERNAL,
     CONF_HOLD_MINUTES,
     CONF_HOLD_POLICY,
     CONF_NAME,
     CONF_SYNC,
+    DEFAULT_COMFORT_TEMP,
+    DEFAULT_ECO_TEMP,
     DEFAULT_HOLD_MINUTES,
     EXPECTED_WRITE_TTL,
     EXTERNAL_DEBOUNCE,
@@ -30,6 +34,8 @@ from .const import (
     HOLD_IGNORE,
     HOLD_NEXT_SWITCH,
     HOLD_UNTIL_RESUMED,
+    PRESET_COMFORT,
+    PRESET_ECO,
 )
 from .external_sensor import ExternalSensorSync
 from .resolver import Resolution, resolve_profile
@@ -64,6 +70,10 @@ class RoomController:
         self._sync: bool = config.get(CONF_SYNC, True)
         self._hold_policy: str = config.get(CONF_HOLD_POLICY, HOLD_NEXT_SWITCH)
         self._hold_minutes: int = int(config.get(CONF_HOLD_MINUTES, DEFAULT_HOLD_MINUTES))
+        self.presets: dict[str, float] = {
+            PRESET_ECO: float(config.get(CONF_ECO_TEMP, DEFAULT_ECO_TEMP)),
+            PRESET_COMFORT: float(config.get(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP)),
+        }
         self.external: ExternalSensorSync | None = None
         if external := config.get(CONF_EXTERNAL):
             self.external = ExternalSensorSync(hub.hass, self.name, external, hub.async_notify)
@@ -130,11 +140,11 @@ class RoomController:
 
         resolution = resolve_profile(
             base_profile=hub.base_profile,
-            rules=hub.rules,
+            rules=hub.all_rules,
             active_rule_ids=hub.rule_engine.active,
             room_id=self.room_id,
             pin=self.room_state.pin,
-            available_profiles=self.room_state.schedules,
+            available_profiles=hub.profiles,
             fallback_profile=hub.profiles[0],
         )
         if (
@@ -145,9 +155,9 @@ class RoomController:
             self.override = None  # a profile change cancels a temporary manual value
         self.resolution = resolution
 
-        week = self.room_state.schedules[resolution.profile]
-        self.scheduled_temp = setpoint_at(week, now, tz)
-        change = next_change(week, now, tz)
+        week = hub.effective_week(self.room_id, resolution.profile)
+        self.scheduled_temp = setpoint_at(week, now, tz, self.presets)
+        change = next_change(week, now, tz, self.presets)
         self.next_change_at, self.next_temp = change if change else (None, None)
 
         if self.override and self.override.until and now >= self.override.until:
@@ -158,7 +168,7 @@ class RoomController:
             for entity_id in self.climates:
                 await self._async_write(entity_id, self.target_temp)
 
-        self._arm_timer(next_switch_time(week, now, tz))
+        self._arm_timer(next_switch_time(week, now, tz, self.presets))
         hub.async_notify()
 
     def _arm_timer(self, next_switch: datetime | None) -> None:
@@ -272,8 +282,10 @@ class RoomController:
             self.hub.async_notify()
 
     def _next_switch(self) -> datetime | None:
-        week = self.room_state.schedules[self.resolution.profile]  # type: ignore[union-attr]
-        return next_switch_time(week, dt_util.utcnow(), dt_util.get_default_time_zone())
+        week = self.hub.effective_week(self.room_id, self.resolution.profile)  # type: ignore[union-attr]
+        return next_switch_time(
+            week, dt_util.utcnow(), dt_util.get_default_time_zone(), self.presets
+        )
 
     def _apply_override(self, value: float, minutes: float | None = None) -> None:
         """Create (or clear, if equal to the schedule) a manual override."""

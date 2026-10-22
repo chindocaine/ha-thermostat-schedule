@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from typing import Any, NamedTuple
 
-from .const import DAYS, MAX_POINTS_PER_DAY, MAX_TEMP, MIN_TEMP
+from .const import (
+    DAYS,
+    DEFAULT_COMFORT_TEMP,
+    DEFAULT_ECO_TEMP,
+    MAX_POINTS_PER_DAY,
+    MAX_TEMP,
+    MIN_TEMP,
+    PRESET_COMFORT,
+    PRESET_ECO,
+    PRESETS,
+)
 
 
 class ScheduleError(ValueError):
@@ -16,11 +27,20 @@ class ScheduleError(ValueError):
         self.code = code
 
 
+# A switch point's temperature: degrees Celsius or the name of a room preset ("eco"/"comfort").
+Temp = float | str
+
+DEFAULT_PRESETS: dict[str, float] = {
+    PRESET_ECO: DEFAULT_ECO_TEMP,
+    PRESET_COMFORT: DEFAULT_COMFORT_TEMP,
+}
+
+
 class SwitchPoint(NamedTuple):
     """A temperature that starts at ``minute`` (minutes after midnight)."""
 
     minute: int
-    temp: float
+    temp: Temp
 
 
 DaySchedule = list[SwitchPoint]
@@ -28,19 +48,19 @@ DaySchedule = list[SwitchPoint]
 WeekSchedule = dict[str, DaySchedule]
 
 _LINE_RE = re.compile(
-    r"^\s*(?P<h>\d{1,2}):(?P<m>\d{2})\s*(?:=|-|;|\s)\s*(?P<t>\d+(?:[.,]\d+)?)\s*(?:°\s*C?|C)?\s*$",
+    r"^\s*(?P<h>\d{1,2}):(?P<m>\d{2})\s*(?:=|-|;|\s)\s*(?P<t>\d+(?:[.,]\d+)?|eco|comfort)\s*(?:°\s*C?|C)?\s*$",
     re.IGNORECASE,
 )
 
 DEFAULT_DAY: DaySchedule = [
-    SwitchPoint(0, 17.0),
-    SwitchPoint(6 * 60, 21.0),
-    SwitchPoint(22 * 60, 17.0),
+    SwitchPoint(0, PRESET_ECO),
+    SwitchPoint(8 * 60, PRESET_COMFORT),
+    SwitchPoint(22 * 60 + 30, PRESET_ECO),
 ]
 
 
 def default_week() -> WeekSchedule:
-    """Return a fresh default week (17 °C night, 21 °C from 06:00 to 22:00)."""
+    """Return a fresh default week (eco, comfort from 08:00 to 22:30)."""
     return {day: list(DEFAULT_DAY) for day in DAYS}
 
 
@@ -49,9 +69,16 @@ def format_minute(minute: int) -> str:
     return f"{minute // 60:02d}:{minute % 60:02d}"
 
 
-def format_temp(temp: float) -> str:
-    """Format a temperature compactly (21.0 -> '21', 21.5 -> '21.5')."""
-    return f"{temp:g}"
+def format_temp(temp: Temp) -> str:
+    """Format a temperature compactly (21.0 -> '21', 21.5 -> '21.5', presets by name)."""
+    return temp if isinstance(temp, str) else f"{temp:g}"
+
+
+def resolve_temp(temp: Temp, presets: Mapping[str, float] | None = None) -> float:
+    """Resolve a switch point temperature to degrees using a room's presets."""
+    if isinstance(temp, str):
+        return float((presets or DEFAULT_PRESETS).get(temp, DEFAULT_PRESETS[temp]))
+    return temp
 
 
 def format_day(points: DaySchedule) -> str:
@@ -74,19 +101,24 @@ def validate_day(points: DaySchedule) -> DaySchedule:
         if point.minute <= last:
             raise ScheduleError("not_increasing")
         last = point.minute
-        if not MIN_TEMP <= point.temp <= MAX_TEMP:
+        if isinstance(point.temp, str):
+            if point.temp not in PRESETS:
+                raise ScheduleError("invalid_format")
+        elif not MIN_TEMP <= point.temp <= MAX_TEMP:
             raise ScheduleError("temp_range")
     return points
 
 
 def parse_day(text: str) -> DaySchedule:
-    """Parse editor text (one ``HH:MM temperature`` per line) into a validated day.
+    """Parse editor text (``HH:MM temperature`` per line or comma separated) into a validated day.
+
+    A temperature is a number (dot or comma decimal) or a preset name (``eco``/``comfort``).
 
     If the first entry is not 00:00, a 00:00 entry is prepended that carries the
     temperature of the last entry (the night temperature wraps around midnight).
     """
     points: DaySchedule = []
-    for raw in text.replace(",\n", "\n").splitlines():
+    for raw in re.split(r"\n|,\s*(?=\d{1,2}:\d{2})", text):
         if not raw.strip():
             continue
         match = _LINE_RE.match(raw)
@@ -95,7 +127,8 @@ def parse_day(text: str) -> DaySchedule:
         hour, minute = int(match["h"]), int(match["m"])
         if hour > 23 or minute > 59:
             raise ScheduleError("invalid_time")
-        temp = float(match["t"].replace(",", "."))
+        token = match["t"].lower()
+        temp: Temp = token if token in PRESETS else float(token.replace(",", "."))
         points.append(SwitchPoint(hour * 60 + minute, temp))
     if not points:
         raise ScheduleError("empty_day")
@@ -116,7 +149,9 @@ def day_from_json(data: list[dict[str, Any]]) -> DaySchedule:
     for item in data:
         try:
             hour, minute = str(item["start"]).split(":")
-            points.append(SwitchPoint(int(hour) * 60 + int(minute), float(item["temp"])))
+            raw = item["temp"]
+            temp: Temp = raw.lower() if isinstance(raw, str) else float(raw)
+            points.append(SwitchPoint(int(hour) * 60 + int(minute), temp))
         except (KeyError, ValueError, TypeError) as err:
             raise ScheduleError("invalid_format") from err
     return validate_day(points)

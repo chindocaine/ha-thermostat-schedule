@@ -98,6 +98,8 @@ class ScheduledTemperatureSensor(RoomEntity, SensorEntity):
             else None,
             "next_change": c.next_change_at.isoformat() if c.next_change_at else None,
             "next_temperature": c.next_temp,
+            "eco_temperature": c.presets["eco"],
+            "comfort_temperature": c.presets["comfort"],
             "thermostats": c.climates,
         }
 

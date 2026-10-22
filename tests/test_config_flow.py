@@ -6,6 +6,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.thermostat_schedule.const import DOMAIN
+from custom_components.thermostat_schedule.models import format_day, parse_day
 
 from .common import OFFICE, install_fake_climate_service, make_entry, set_climate
 
@@ -135,36 +136,73 @@ async def test_room_rejects_thermostat_used_elsewhere(hass) -> None:
     assert result["errors"] == {"climate_entities": "climate_in_use"}
 
 
-async def test_options_edit_day_with_copy(hass) -> None:
+async def configure(flow_mgr, result, user_input):
+    return await flow_mgr.async_configure(result["flow_id"], user_input)
+
+
+async def test_hub_edits_default_schedule_for_all_rooms(hass) -> None:
     entry = await create_hub(hass)
-    result = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = hass.config_entries.options
+    result = await flow.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.MENU
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "schedule"}
-    )
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {"room": "room1"})
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"profile": "away"}
-    )
+    result = await configure(flow, result, {"next_step_id": "schedule"})
+    result = await configure(flow, result, {"profile": "away"})
     assert result["type"] is FlowResultType.MENU and result["step_id"] == "schedule_day"
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "edit_day_sat"}
-    )
+    result = await configure(flow, result, {"next_step_id": "edit_day_sat"})
     assert result["step_id"] == "edit_day_sat"
 
-    bad = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"schedule": "nonsense"}
-    )
+    bad = await configure(flow, result, {"schedule": "nonsense"})
     assert bad["errors"] == {"schedule": "invalid_format"}
 
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"schedule": "08:00 22\n23:00 16", "copy_to": ["sun"]}
-    )
+    result = await configure(flow, result, {"schedule": "08:00 22\n23:00 16", "copy_to": ["sun"]})
     assert result["step_id"] == "schedule_day"
-    week = entry.runtime_data.get_week("room1", "away")
+    week = entry.runtime_data.default_week("away")
     assert week["sat"] == week["sun"]
     assert week["sat"][0].temp == 16.0 and week["sat"][1].minute == 480
-    assert week["mon"][1].temp == 21.0  # untouched
+    assert week["mon"][1].temp == "comfort"  # untouched
+    # the room has no override, so it follows the new default
+    assert entry.runtime_data.effective_week("room1", "away")["sat"] == week["sat"]
+
+
+async def test_default_day_matches_requested_prefill(hass) -> None:
+    entry = await create_hub(hass)
+    text = format_day(entry.runtime_data.default_week("home")["mon"])
+    assert text == "00:00 eco\n08:00 comfort\n22:30 eco"
+
+
+async def test_room_overrides_single_day_and_can_reset(hass) -> None:
+    entry = await create_hub(hass)
+    hub = entry.runtime_data
+    flow = hass.config_entries.subentries
+    result = await flow.async_init(
+        (entry.entry_id, "room"), context={"source": "reconfigure", "subentry_id": "room1"}
+    )
+    assert result["type"] is FlowResultType.MENU and result["step_id"] == "reconfigure"
+    result = await configure(flow, result, {"next_step_id": "schedule"})
+    result = await configure(flow, result, {"profile": "home"})
+    assert result["step_id"] == "schedule_day"
+    result = await configure(flow, result, {"next_step_id": "edit_day_mon"})
+    result = await configure(
+        flow, result, {"schedule": "00:00 18\n09:00 23", "copy_to": ["tue"], "use_default": False}
+    )
+    assert result["step_id"] == "schedule_day"
+    assert hub.is_override("room1", "home", "mon") and hub.is_override("room1", "home", "tue")
+    assert not hub.is_override("room1", "home", "wed")
+    assert hub.effective_week("room1", "home")["mon"][1].temp == 23.0
+    assert hub.default_week("home")["mon"][1].temp == "comfort"  # hub default untouched
+
+    # default change flows through to non-overridden days only
+    await hub.async_set_default_day("home", "wed", parse_day("00:00 20"))
+    assert hub.effective_week("room1", "home")["wed"][0].temp == 20.0
+
+    result = await configure(flow, result, {"next_step_id": "edit_day_tue"})
+    result = await configure(flow, result, {"schedule": "00:00 18", "use_default": True})
+    assert not hub.is_override("room1", "home", "tue")
+    assert hub.is_override("room1", "home", "mon")
+
+    result = await configure(flow, result, {"next_step_id": "schedule_reset"})
+    assert result["step_id"] == "schedule_day"
+    assert not hub.is_override("room1", "home", "mon")
 
 
 async def test_options_profile_add_rename_delete_with_rule_guard(hass) -> None:
@@ -182,72 +220,196 @@ async def test_options_profile_add_rename_delete_with_rule_guard(hass) -> None:
     entry = await create_hub(hass, rules=[rule])
     flow = hass.config_entries.options
 
-    async def step(result, user_input):
-        return await flow.async_configure(result["flow_id"], user_input)
-
     result = await flow.async_init(entry.entry_id)
-    result = await step(result, {"next_step_id": "profiles"})
-    result = await step(result, {"next_step_id": "profile_add"})
-    result = await step(result, {"new_name": "guests", "copy_from": "home"})
+    result = await configure(flow, result, {"next_step_id": "profiles"})
+    result = await configure(flow, result, {"next_step_id": "profile_add"})
+    result = await configure(flow, result, {"new_name": "guests", "copy_from": "home"})
     assert result["step_id"] == "profiles"
     await hass.async_block_till_done()
     assert "guests" in entry.options["profiles"]
-    assert entry.runtime_data.get_week("room1", "guests")["mon"][1].temp == 21.0
+    assert entry.runtime_data.default_week("guests")["mon"][1].temp == "comfort"
 
     result = await flow.async_init(entry.entry_id)
-    result = await step(result, {"next_step_id": "profiles"})
-    result = await step(result, {"next_step_id": "profile_delete"})
-    result = await step(result, {"profile": "away"})
+    result = await configure(flow, result, {"next_step_id": "profiles"})
+    result = await configure(flow, result, {"next_step_id": "profile_delete"})
+    result = await configure(flow, result, {"profile": "away"})
     assert result["errors"] == {"profile": "profile_in_use"}
 
     result = await flow.async_init(entry.entry_id)
-    result = await step(result, {"next_step_id": "profiles"})
-    result = await step(result, {"next_step_id": "profile_rename"})
-    result = await step(result, {"profile": "away", "new_name": "out"})
+    result = await configure(flow, result, {"next_step_id": "profiles"})
+    result = await configure(flow, result, {"next_step_id": "profile_rename"})
+    result = await configure(flow, result, {"profile": "away", "new_name": "out"})
     await hass.async_block_till_done()
     assert entry.options["profiles"] == ["home", "out", "vacation", "guests"]
     assert entry.options["rules"][0]["profile"] == "out"
-    assert "out" in entry.runtime_data.store.rooms["room1"].schedules
+    assert "out" in entry.runtime_data.store.defaults
 
 
-async def test_options_rule_add_edit_delete(hass) -> None:
+async def test_global_rule_add_edit_delete_with_is_not(hass) -> None:
     entry = await create_hub(hass)
     flow = hass.config_entries.options
     result = await flow.async_init(entry.entry_id)
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rules"})
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rule_add"})
+    result = await configure(flow, result, {"next_step_id": "rules"})
+    result = await configure(flow, result, {"next_step_id": "rule_add"})
     form = {
-        "name": "Vacation",
-        "scope": "all",
-        "entities": ["input_boolean.vacation"],
+        "name": "Away",
+        "entities": ["person.me"],
         "match": "any",
-        "state": "on",
+        "operator": "is_not",
+        "states": ["home"],
         "for_minutes": 0,
-        "profile": "vacation",
+        "profile": "away",
         "priority": 20,
     }
-    result = await flow.async_configure(result["flow_id"], form)
+    bad = await configure(flow, result, {**form, "states": []})
+    assert bad["errors"] == {"states": "no_state"}
+    result = await configure(flow, result, form)
     assert result["step_id"] == "rules"
     await hass.async_block_till_done()
     (rule,) = entry.options["rules"]
-    assert rule["profile"] == "vacation" and rule["priority"] == 20
+    assert rule["operator"] == "is_not" and rule["states"] == ["home"] and "scope" not in rule
 
     result = await flow.async_init(entry.entry_id)
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rules"})
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rule_edit"})
-    result = await flow.async_configure(result["flow_id"], {"rule": rule["id"]})
+    result = await configure(flow, result, {"next_step_id": "rules"})
+    result = await configure(flow, result, {"next_step_id": "rule_edit"})
+    result = await configure(flow, result, {"rule": rule["id"]})
     assert result["step_id"] == "rule_edit_form"
-    result = await flow.async_configure(result["flow_id"], {**form, "priority": 5})
+    result = await configure(flow, result, {**form, "priority": 5, "states": ["home", "work"]})
     await hass.async_block_till_done()
-    assert [r["priority"] for r in entry.options["rules"]] == [5]
+    assert [(r["priority"], r["states"]) for r in entry.options["rules"]] == [(5, ["home", "work"])]
     assert entry.options["rules"][0]["id"] == rule["id"]
 
     result = await flow.async_init(entry.entry_id)
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rules"})
-    result = await flow.async_configure(result["flow_id"], {"next_step_id": "rule_delete"})
-    result = await flow.async_configure(result["flow_id"], {"rule": rule["id"]})
+    result = await configure(flow, result, {"next_step_id": "rules"})
+    result = await configure(flow, result, {"next_step_id": "rule_delete"})
+    result = await configure(flow, result, {"rule": rule["id"]})
     await hass.async_block_till_done()
     assert entry.options["rules"] == []
+
+
+async def test_room_rule_applies_to_that_room_only(hass) -> None:
+    entry = await create_hub(hass)
+    flow = hass.config_entries.subentries
+    result = await flow.async_init(
+        (entry.entry_id, "room"), context={"source": "reconfigure", "subentry_id": "room1"}
+    )
+    result = await configure(flow, result, {"next_step_id": "rules"})
+    result = await configure(flow, result, {"next_step_id": "rule_add"})
+    result = await configure(
+        flow,
+        result,
+        {
+            "name": "Office empty",
+            "entities": ["binary_sensor.office_occupied"],
+            "match": "any",
+            "operator": "is",
+            "states": ["off"],
+            "for_minutes": 0,
+            "profile": "away",
+            "priority": 10,
+        },
+    )
+    assert result["step_id"] == "rules"
+    await hass.async_block_till_done()
+    (rule,) = entry.subentries["room1"].data["rules"]
+    assert rule["profile"] == "away"
+    assert entry.options["rules"] == []  # global rules untouched
+    hub = entry.runtime_data
+    assert [r["scope"] for r in hub.all_rules] == ["room1"]
+
+    hass.states.async_set("binary_sensor.office_occupied", "off")
+    await hass.async_block_till_done()
+    assert hub.controllers["room1"].resolution.profile == "away"
+    assert hub.hub_resolution().profile == "home"  # hub level ignores room rules
+
+
+ROOM_RULE = {
+    "id": "x",
+    "name": "n",
+    "entities": ["binary_sensor.x"],
+    "match": "any",
+    "operator": "is",
+    "states": ["on"],
+    "for_minutes": 0,
+    "profile": "away",
+    "priority": 1,
+}
+
+
+async def test_reconfigure_room_settings_keeps_rules(hass) -> None:
+    entry = await create_hub(hass)
+    sub = entry.subentries["room1"]
+    hass.config_entries.async_update_subentry(entry, sub, data={**sub.data, "rules": [ROOM_RULE]})
+    await hass.async_block_till_done()
+    flow = hass.config_entries.subentries
+    result = await flow.async_init(
+        (entry.entry_id, "room"), context={"source": "reconfigure", "subentry_id": "room1"}
+    )
+    result = await configure(flow, result, {"next_step_id": "settings"})
+    assert result["step_id"] == "settings"
+    result = await configure(
+        flow,
+        result,
+        {
+            "name": "Study",
+            "climate_entities": ["climate.office_1", "climate.office_2"],
+            "sync_thermostats": False,
+            "hold_policy": "until_resumed",
+            "hold_minutes": 120,
+            "use_external": False,
+        },
+    )
+    assert result["type"] is FlowResultType.MENU and result["step_id"] == "reconfigure"
+    await hass.async_block_till_done()
+    assert entry.subentries["room1"].title == "Study"
+    assert entry.subentries["room1"].data["rules"] == [ROOM_RULE]
+    assert entry.runtime_data.controllers["room1"].name == "Study"
+    result = await configure(flow, result, {"next_step_id": "finish"})
+    assert result["type"] is FlowResultType.ABORT
+
+
+def _old_week(temp, sat=None):
+    days = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+    week = {d: [{"start": "00:00", "temp": temp}] for d in days}
+    if sat:
+        week["sat"] = [{"start": "00:00", "temp": sat}]
+    return week
+
+
+async def test_old_storage_layout_is_migrated(hass, hass_storage) -> None:
+    room2 = {**OFFICE, "name": "Two", "climate_entities": ["climate.two"]}
+    entry = make_entry(rooms={"room1": OFFICE, "room2": room2})
+    key = f"thermostat_schedule.{entry.entry_id}"
+    hass_storage[key] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": key,
+        "data": {
+            "base_profile": "away",
+            "enabled": True,
+            "rooms": {
+                "room1": {"auto": True, "pin": None, "schedules": {"home": _old_week(20.0)}},
+                "room2": {
+                    "auto": False,
+                    "pin": "home",
+                    "schedules": {"home": _old_week(20.0, sat=25.0)},
+                },
+            },
+        },
+    }
+    install_fake_climate_service(hass)
+    for cid in ("climate.office_1", "climate.office_2", "climate.two"):
+        set_climate(hass, cid, 10)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    hub = entry.runtime_data
+    assert hub.base_profile == "away"
+    assert hub.default_week("home")["mon"][0].temp == 20.0  # first room became the default
+    assert not hub.is_override("room1", "home", "sat")
+    assert hub.is_override("room2", "home", "sat")
+    assert hub.effective_week("room2", "home")["sat"][0].temp == 25.0
+    assert hub.store.rooms["room2"].auto is False
 
 
 async def test_unload_and_reload_preserves_state(hass) -> None:
@@ -281,27 +443,3 @@ async def test_adding_a_room_to_a_running_hub_reloads_it(hass) -> None:
     await hass.async_block_till_done()
     assert len(entry.runtime_data.controllers) == 2
     assert hass.states.get("switch.bath_automatic_mode") is not None
-
-
-async def test_reconfigure_room(hass) -> None:
-    entry = await create_hub(hass)
-    result = await hass.config_entries.subentries.async_init(
-        (entry.entry_id, "room"),
-        context={"source": "reconfigure", "subentry_id": "room1"},
-    )
-    assert result["step_id"] == "reconfigure"
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        {
-            "name": "Study",
-            "climate_entities": ["climate.office_1", "climate.office_2"],
-            "sync_thermostats": False,
-            "hold_policy": "until_resumed",
-            "hold_minutes": 120,
-            "use_external": False,
-        },
-    )
-    assert result["type"] is FlowResultType.ABORT
-    await hass.async_block_till_done()
-    assert entry.subentries["room1"].title == "Study"
-    assert entry.runtime_data.controllers["room1"].name == "Study"

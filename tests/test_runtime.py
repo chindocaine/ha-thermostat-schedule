@@ -11,8 +11,8 @@ from custom_components.thermostat_schedule.models import parse_day
 from .common import OFFICE, install_fake_climate_service, make_entry, set_climate
 
 ROOM = "room_office"
-# Monday 2026-10-26 06:00 UTC == 07:00 Europe/Berlin (CET)
-MONDAY_7 = "2026-10-26 06:00:00+00:00"
+# Monday 2026-10-26 08:00 UTC == 09:00 Europe/Berlin (CET): default schedule says 21.5 °C
+MONDAY_9 = "2026-10-26 08:00:00+00:00"
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ async def berlin(hass: HomeAssistant) -> None:
     await hass.config.async_set_time_zone("Europe/Berlin")
 
 
-async def setup_office(hass, freezer, *, rules=None, extra_rooms=None, start=MONDAY_7):
+async def setup_office(hass, freezer, *, rules=None, extra_rooms=None, start=MONDAY_9):
     freezer.move_to(start)
     calls = install_fake_climate_service(hass)
     set_climate(hass, "climate.office_1", 15)
@@ -44,17 +44,17 @@ async def advance(hass, freezer, **delta):
 
 async def test_applies_schedule_to_all_thermostats_and_follows_it(hass, freezer, berlin) -> None:
     entry, calls = await setup_office(hass, freezer)
-    assert target(hass, "climate.office_1") == 21
-    assert target(hass, "climate.office_2") == 21
+    assert target(hass, "climate.office_1") == 21.5
+    assert target(hass, "climate.office_2") == 21.5
 
-    await advance(hass, freezer, hours=15)  # 22:00 local
-    assert target(hass, "climate.office_1") == 17
-    assert target(hass, "climate.office_2") == 17
+    await advance(hass, freezer, hours=14)  # 23:00 local
+    assert target(hass, "climate.office_1") == 19
+    assert target(hass, "climate.office_2") == 19
 
     state = hass.states.get("sensor.office_target_temperature")
-    assert state.state == "17.0"
+    assert state.state == "19.0"
     assert state.attributes["profile"] == "home"
-    assert state.attributes["next_temperature"] == 21.0
+    assert state.attributes["next_temperature"] == 21.5
 
 
 async def test_no_redundant_writes(hass, freezer, berlin) -> None:
@@ -77,9 +77,9 @@ async def test_manual_change_propagates_and_holds_until_next_switch(hass, freeze
     assert state.state == "23.0"
     assert state.attributes["override_temperature"] == 23.0
 
-    await advance(hass, freezer, hours=15)  # next switch point 22:00
-    assert target(hass, "climate.office_1") == 17
-    assert target(hass, "climate.office_2") == 17
+    await advance(hass, freezer, hours=14)  # next switch point 22:30
+    assert target(hass, "climate.office_1") == 19
+    assert target(hass, "climate.office_2") == 19
     assert (
         hass.states.get("sensor.office_target_temperature").attributes["override_temperature"]
         is None
@@ -94,8 +94,8 @@ async def test_resume_button_clears_override(hass, freezer, berlin) -> None:
         "button", "press", {"entity_id": "button.office_resume_schedule"}, blocking=True
     )
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_1") == 21
-    assert target(hass, "climate.office_2") == 21
+    assert target(hass, "climate.office_1") == 21.5
+    assert target(hass, "climate.office_2") == 21.5
 
 
 async def test_manual_mode_does_not_write_but_still_syncs(hass, freezer, berlin) -> None:
@@ -106,19 +106,19 @@ async def test_manual_mode_does_not_write_but_still_syncs(hass, freezer, berlin)
     await hass.async_block_till_done()
     calls.clear()
 
-    await advance(hass, freezer, hours=15)  # schedule would change to 17
+    await advance(hass, freezer, hours=14)  # schedule would change to 19
     assert calls == []
-    assert target(hass, "climate.office_1") == 21
+    assert target(hass, "climate.office_1") == 21.5
 
-    set_climate(hass, "climate.office_1", 19)
+    set_climate(hass, "climate.office_1", 20)
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_2") == 19  # sync still active
+    assert target(hass, "climate.office_2") == 20  # sync still active
 
     await hass.services.async_call(
         "switch", "turn_on", {"entity_id": "switch.office_automatic_mode"}, blocking=True
     )
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_1") == 17
+    assert target(hass, "climate.office_1") == 19
 
 
 async def test_master_switch_stops_everything(hass, freezer, berlin) -> None:
@@ -128,7 +128,7 @@ async def test_master_switch_stops_everything(hass, freezer, berlin) -> None:
     )
     await hass.async_block_till_done()
     calls.clear()
-    await advance(hass, freezer, hours=15)
+    await advance(hass, freezer, hours=14)
     assert calls == []
     assert hass.states.get("sensor.upper_floor_effective_mode").state == "disabled"
 
@@ -136,7 +136,7 @@ async def test_master_switch_stops_everything(hass, freezer, berlin) -> None:
         "switch", "turn_on", {"entity_id": "switch.upper_floor_heating_schedules"}, blocking=True
     )
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_1") == 17
+    assert target(hass, "climate.office_1") == 19
 
 
 async def test_rule_switches_profile_and_returns_to_base(hass, freezer, berlin) -> None:
@@ -158,7 +158,7 @@ async def test_rule_switches_profile_and_returns_to_base(hass, freezer, berlin) 
     hub = entry.runtime_data
     await hub.async_set_day(ROOM, "away", "mon", parse_day("00:00 15"))
     await hub.async_set_day(ROOM, "vacation", "mon", parse_day("00:00 12"))
-    assert target(hass, "climate.office_1") == 21
+    assert target(hass, "climate.office_1") == 21.5
 
     hass.states.async_set("person.me", "not_home")
     await hass.async_block_till_done()
@@ -197,7 +197,7 @@ async def test_rule_for_delay(hass, freezer, berlin) -> None:
     await entry.runtime_data.async_set_day(ROOM, "away", "mon", parse_day("00:00 15"))
     hass.states.async_set("person.me", "not_home")
     await advance(hass, freezer, minutes=5)
-    assert target(hass, "climate.office_1") == 21
+    assert target(hass, "climate.office_1") == 21.5
     await advance(hass, freezer, minutes=6)
     assert target(hass, "climate.office_1") == 15
 
@@ -227,12 +227,12 @@ async def test_room_pin_ignores_hub_rules(hass, freezer, berlin) -> None:
     )
     hass.states.async_set("person.me", "not_home")
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_1") == 21
+    assert target(hass, "climate.office_1") == 21.5
 
 
 async def test_schedule_edit_applies_immediately(hass, freezer, berlin) -> None:
     entry, _ = await setup_office(hass, freezer)
-    await entry.runtime_data.async_set_day(ROOM, "home", "mon", parse_day("00:00 18\n09:00 22"))
+    await entry.runtime_data.async_set_day(ROOM, "home", "mon", parse_day("00:00 18\n10:00 22"))
     assert target(hass, "climate.office_1") == 18
 
 
@@ -243,7 +243,7 @@ async def test_thermostat_coming_online_gets_current_value(hass, freezer, berlin
     calls.clear()
     set_climate(hass, "climate.office_2", 9)
     await hass.async_block_till_done()
-    assert target(hass, "climate.office_2") == 21
+    assert target(hass, "climate.office_2") == 21.5
 
 
 async def test_set_override_service(hass, freezer, berlin) -> None:
@@ -262,7 +262,7 @@ async def test_set_override_service(hass, freezer, berlin) -> None:
     assert target(hass, "climate.office_1") == 24
     assert target(hass, "climate.office_2") == 24
     await advance(hass, freezer, minutes=31)
-    assert target(hass, "climate.office_1") == 21
+    assert target(hass, "climate.office_1") == 21.5
 
 
 async def test_two_hubs_are_independent(hass, freezer, berlin) -> None:
@@ -275,6 +275,30 @@ async def test_two_hubs_are_independent(hass, freezer, berlin) -> None:
     other.add_to_hass(hass)
     assert await hass.config_entries.async_setup(other.entry_id)
     await hass.async_block_till_done()
-    assert target(hass, "climate.bed") == 21
+    assert target(hass, "climate.bed") == 21.5
     await other.runtime_data.async_set_enabled(False)
     assert entry.runtime_data.enabled is True
+
+
+async def test_room_presets_drive_the_default_schedule(hass, freezer, berlin) -> None:
+    freezer.move_to(MONDAY_9)
+    install_fake_climate_service(hass)
+    set_climate(hass, "climate.office_1", 10)
+    set_climate(hass, "climate.office_2", 10)
+    cozy = {**OFFICE, "eco_temperature": 17.0, "comfort_temperature": 23.0}
+    entry = make_entry(rooms={ROOM: cozy})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert target(hass, "climate.office_1") == 23.0  # "comfort" at 09:00
+    state = hass.states.get("sensor.office_target_temperature")
+    assert state.attributes["eco_temperature"] == 17.0
+    assert state.attributes["next_temperature"] == 17.0
+
+    await entry.runtime_data.async_set_day(
+        ROOM, "home", "mon", parse_day("00:00 eco, 08:00 comfort, 19:00 24, 22:30 eco")
+    )
+    await advance(hass, freezer, hours=10)  # 19:00
+    assert target(hass, "climate.office_1") == 24.0
+    await advance(hass, freezer, hours=4)  # 23:00
+    assert target(hass, "climate.office_1") == 17.0

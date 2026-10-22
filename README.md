@@ -35,50 +35,84 @@ Requires a recent Home Assistant (config subentries; developed against 2026.10).
 ## Concepts
 
 ### Hub
-A hub holds the **profile names**, **trigger rules**, the **base profile** and a **master switch**.
-Add the integration again for another hub. Every hub is fully independent; a thermostat can belong to
-only one room across all hubs.
+A hub holds the **profile names**, the **default schedules**, the **global trigger rules**, the
+**base profile** and a **master switch**. Add the integration again for another hub. Every hub is
+fully independent; a thermostat can belong to only one room across all hubs.
+
+Hub settings (**Configure** on the hub):
+
+- **Default schedules** – one weekly schedule per profile, used by every room (using the room's
+  eco/comfort presets).
+- **Profiles** – add, rename, delete.
+- **Global trigger rules** – apply to all rooms of the hub.
 
 ### Room
-Added with the **Add room** button on the hub. A room has one or more thermostats, a manual-change
-behavior, and optionally an external temperature sensor. All thermostats of a room follow the same
-schedule.
+Added with the **Add room** button on the hub. Room settings (**⋮ → Reconfigure** on the room):
+
+- **Thermostats & settings** – thermostats, eco/comfort temperatures, sync, manual-change behavior,
+  external sensor.
+- **Schedule overrides** – override single days of a profile for this room; everything else keeps
+  following the hub default (changes to the default still reach the room). Overridden days are
+  marked with ✎; check *Use hub default* to drop an override, or reset a whole profile.
+- **Room-specific rules** – rules that only apply to this room.
+
+All thermostats of a room follow the same schedule.
 
 ### Profiles and the effective profile
 For each room the profile is resolved in this order:
 
 1. The room's **Profile** select, if pinned (anything other than *Follow hub*).
-2. The highest-priority **active rule** (global rules or rules scoped to that room).
+2. The highest-priority **active rule** – global rules and this room's own rules compete by priority.
 3. The hub's **Base profile** select.
-
-If a profile is missing for a room, the first profile of the hub is used.
 
 Because rules are overlays on the base profile, nothing has to be remembered: when the person
 returns home the rule becomes inactive and the room falls back to your selected base profile.
 
 ### Rules
-Options → **Trigger rules**. A rule says: *while these entities have this state, use that profile*.
-Select any existing entity (person, `input_boolean`, binary sensor, …); for example:
+A rule says: *while these entities are / are not in these states, use that profile*. Select any
+existing entity (person, `input_boolean`, binary sensor, …) and set:
+
+- **Match** – any or all of the entities must satisfy the condition,
+- **Entity state** – **is** (one of the listed states) or **is not** (anything except the listed
+  states), plus the **state(s)**,
+- an optional delay ("only after N minutes"), the target **profile** and a **priority**.
+
+Examples:
 
 | Rule | Entities | Match | State | Profile | Priority |
 |---|---|---|---|---|---|
-| Nobody home | `person.a`, `person.b` | all | `not_home` | `away` | 10 |
-| Vacation | `input_boolean.vacation` | any | `on` | `vacation` | 20 |
+| Nobody home | `person.a`, `person.b` | all | **is not** `home` | `away` | 10 |
+| Vacation | `input_boolean.vacation` | any | **is** `on` | `vacation` | 20 |
 
-Unavailable/unknown entities never satisfy a rule. An optional delay ("only after N minutes")
-avoids reacting to short absences.
+"**is not** `home`" counts every other zone (work, school, …) as away, not just `not_home`.
+Unavailable/unknown entities never match, not even for "is not", so a flaky tracker can't switch a
+room to "away".
+
+Global rules live in the hub's settings, room-specific rules in the room's settings.
 
 ### Editing schedules
-Options → **Edit schedules** → room → profile → day. Each day is a list of switch points:
+Hub: **Configure → Default schedules**. Room: **Reconfigure → Schedule overrides**. Choose a profile,
+then a day. Each day is a list of switch points, one per line as `HH:MM temperature`. The temperature
+is either a **preset name** or a **number**:
 
 ```
-06:00 21
-22:00 17
+00:00 eco
+08:00 comfort
+19:00 23
+22:30 eco
 ```
 
-Each temperature applies until the next line. If there is no `00:00` line, the last temperature
-carries over midnight (so the example above has 17 °C until 06:00). Use **Also apply to** to copy a
-day to other days (e.g. Monday → Tuesday–Friday). Changes apply immediately.
+Each temperature applies until the next line; use a dot for half degrees (`21.5`). If there is no
+`00:00` line, the last temperature carries over midnight. The inline form
+`00:00 eco, 08:00 comfort, 19:00 23, 22:30 eco` is accepted as well. Use **Also apply to** to copy a
+day to other days (e.g. Monday → Tuesday–Friday). Changes apply immediately. New profiles start with
+`eco` / `comfort` / `eco` (or a copy of an existing profile).
+
+### Temperature presets
+Every room has two presets, set in the room's settings: **eco** (default 19 °C) and **comfort**
+(default 21.5 °C). Schedules refer to them by name, so one default schedule can serve rooms with
+different temperatures (a bathroom with comfort 23 °C, a bedroom with eco 17 °C). Changing a preset
+takes effect everywhere it is used. Use a literal number anywhere you need a one-off temperature.
 
 ### Manual changes
 When someone changes the target on a thermostat, per room you choose:
